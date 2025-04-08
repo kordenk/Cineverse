@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New & Popular - CineVerse</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+    <link rel="manifest" href="assets/site.webmanifest">
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/movies.css">
+    <link rel="stylesheet" href="css/new-popular.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <div class="nav-logo">
+            <a href="index.html">
+                <h1>CineVerse</h1>
+            </a>
+        </div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="movies.html">Movies</a>
+            <a href="tv-shows.html">TV Shows</a>
+            <a href="new-popular.html" class="active">New & Popular</a>
+            <a href="categories.html">Categories</a>
+        </div>
+        <div class="nav-search">
+            <input type="text" id="search-input" placeholder="Search movies, TV shows...">
+            <button id="search-button"><i class="fas fa-search"></i></button>
+        </div>
+        <div class="nav-profile">
+            <img src="assets/default-avatar.png" alt="Profile">
+        </div>
+    </nav>
+
+    <div class="content-container">
+        <div class="section-tabs">
+            <button class="tab-button active" data-section="trending">Trending</button>
+            <button class="tab-button" data-section="upcoming">Coming Soon</button>
+            <button class="tab-button" data-section="new-releases">New Releases</button>
+            <button class="tab-button" data-section="top-rated">Top Rated</button>
+        </div>
+
+        <div class="content-grid" id="content-grid">
+            <!-- Content will be dynamically loaded here -->
+        </div>
+
+        <div class="pagination">
+            <button class="prev-page" disabled><i class="fas fa-chevron-left"></i></button>
+            <span class="page-info">Page 1</span>
+            <button class="next-page"><i class="fas fa-chevron-right"></i></button>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/new-popular.js"></script>
+    <button id="back-to-top" title="Back to Top">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+</body>
+</html> 

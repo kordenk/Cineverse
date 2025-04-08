@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - CineVerse</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+    <link rel="manifest" href="assets/site.webmanifest">
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/profile.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <div class="nav-logo">
+            <a href="index.html">
+                <h1>CineVerse</h1>
+            </a>
+        </div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="movies.html">Movies</a>
+            <a href="tv-shows.html">TV Shows</a>
+            <a href="new-popular.html">New & Popular</a>
+            <a href="categories.html">Categories</a>
+        </div>
+        <div class="nav-search">
+            <input type="text" placeholder="Search movies, TV shows...">
+            <button><i class="fas fa-search"></i></button>
+        </div>
+        <div class="nav-profile">
+            <img src="assets/default-avatar.png" alt="Profile" id="nav-profile-img">
+        </div>
+    </nav>
+
+    <!-- Profile Page Container -->
+    <div class="profile-container">
+        <div class="profile-sidebar">
+            <div class="profile-user-info">
+                <div class="profile-avatar">
+                    <img src="assets/default-avatar.png" alt="User Avatar" id="profile-avatar-img">
+                    <div class="avatar-change-btn">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                </div>
+                <h2 id="profile-username">User Name</h2>
+                <p id="profile-email">user@example.com</p>
+            </div>
+            <div class="profile-menu">
+                <button class="menu-item active" data-section="account">
+                    <i class="fas fa-user"></i> Account
+                </button>
+                <button class="menu-item" data-section="watchlist">
+                    <i class="fas fa-bookmark"></i> My Watchlist
+                </button>
+                <button class="menu-item" data-section="history">
+                    <i class="fas fa-history"></i> Viewing History
+                </button>
+                <button class="menu-item" data-section="preferences">
+                    <i class="fas fa-sliders-h"></i> Preferences
+                </button>
+                <button class="logout-button">
+                    <i class="fas fa-sign-out-alt"></i> Log Out
+                </button>
+            </div>
+        </div>
+
+        <div class="profile-content">
+            <!-- Account Section -->
+            <div class="profile-section active" id="account-section">
+                <h2>Account Settings</h2>
+                <div class="account-form">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" placeholder="Your username">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" placeholder="Your email" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label for="current-password">Current Password</label>
+                        <input type="password" id="current-password" name="current-password" placeholder="Current password">
+                    </div>
+                    <div class="form-group">
+                        <label for="new-password">New Password</label>
+                        <input type="password" id="new-password" name="new-password" placeholder="New password">
+                    </div>
+                    <div class="form-group">
+                        <label for="confirm-password">Confirm New Password</label>
+                        <input type="password" id="confirm-password" name="confirm-password" placeholder="Confirm new password">
+                    </div>
+                    <button class="save-button" id="save-account-btn">Save Changes</button>
+                </div>
+            </div>
+
+            <!-- Watchlist Section -->
+            <div class="profile-section" id="watchlist-section">
+                <h2>My Watchlist</h2>
+                <div class="watchlist-filters">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="movie">Movies</button>
+                    <button class="filter-btn" data-filter="tv">TV Shows</button>
+                </div>
+                <div class="watchlist-grid" id="watchlist-grid">
+                    <!-- Watchlist items will be loaded here -->
+                    <div class="empty-state hidden">
+                        <i class="fas fa-bookmark"></i>
+                        <p>Your watchlist is empty. Start adding movies and TV shows!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Section -->
+            <div class="profile-section" id="history-section">
+                <h2>Viewing History</h2>
+                <div class="history-header">
+                    <div class="history-filters">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="movie">Movies</button>
+                        <button class="filter-btn" data-filter="tv">TV Shows</button>
+                    </div>
+                    <button class="clear-history-btn">
+                        <i class="fas fa-trash"></i> Clear History
+                    </button>
+                </div>
+                <div class="history-list" id="history-list">
+                    <!-- History items will be loaded here -->
+                    <div class="empty-state hidden">
+                        <i class="fas fa-history"></i>
+                        <p>Your viewing history is empty.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preferences Section -->
+            <div class="profile-section" id="preferences-section">
+                <h2>Preferences</h2>
+                <div class="preferences-form">
+                    <div class="form-group">
+                        <label>Theme</label>
+                        <div class="theme-selector">
+                            <button class="theme-btn active" data-theme="dark">
+                                <div class="theme-preview dark"></div>
+                                <span>Dark</span>
+                            </button>
+                            <button class="theme-btn" data-theme="light">
+                                <div class="theme-preview light"></div>
+                                <span>Light</span>
+                            </button>
+                            <button class="theme-btn" data-theme="cosmic">
+                                <div class="theme-preview cosmic"></div>
+                                <span>Cosmic</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Playback</label>
+                        <div class="toggle-container">
+                            <div class="toggle-item">
+                                <span>Autoplay Trailers</span>
+                                <label class="switch">
+                                    <input type="checkbox" id="autoplay-toggle" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            <div class="toggle-item">
+                                <span>Subtitles Enabled</span>
+                                <label class="switch">
+                                    <input type="checkbox" id="subtitles-toggle" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Favorite Genres</label>
+                        <div class="genres-grid" id="genres-grid">
+                            <!-- Genres will be loaded here -->
+                        </div>
+                    </div>
+                    <button class="save-button" id="save-preferences-btn">Save Preferences</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login/Register Modal -->
+    <div class="auth-modal" id="auth-modal">
+        <div class="auth-container">
+            <div class="auth-header">
+                <div class="auth-tabs">
+                    <button class="auth-tab active" data-tab="login">Login</button>
+                    <button class="auth-tab" data-tab="register">Register</button>
+                </div>
+                <button class="close-auth">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="auth-body">
+                <!-- Login Form -->
+                <form class="auth-form active" id="login-form">
+                    <div class="form-group">
+                        <label for="login-email">Email</label>
+                        <input type="email" id="login-email" required placeholder="Enter your email">
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" required placeholder="Enter your password">
+                    </div>
+                    <button type="submit" class="auth-button">Login</button>
+                    <div class="form-error" id="login-error"></div>
+                </form>
+                
+                <!-- Register Form -->
+                <form class="auth-form" id="register-form">
+                    <div class="form-group">
+                        <label for="register-username">Username</label>
+                        <input type="text" id="register-username" required placeholder="Choose a username">
+                    </div>
+                    <div class="form-group">
+                        <label for="register-email">Email</label>
+                        <input type="email" id="register-email" required placeholder="Enter your email">
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">Password</label>
+                        <input type="password" id="register-password" required placeholder="Choose a password (min 6 characters)">
+                    </div>
+                    <div class="form-group">
+                        <label for="register-confirm">Confirm Password</label>
+                        <input type="password" id="register-confirm" required placeholder="Confirm your password">
+                    </div>
+                    <button type="submit" class="auth-button">Register</button>
+                    <div class="form-error" id="register-error"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Avatar Change Modal -->
+    <div class="avatar-modal" id="avatar-modal">
+        <div class="avatar-container">
+            <div class="avatar-header">
+                <h3>Change Profile Picture</h3>
+                <button class="close-avatar">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="avatar-body">
+                <div class="avatars-grid">
+                    <div class="avatar-option" data-avatar="assets/default-avatar.png">
+                        <img src="assets/default-avatar.png" alt="Default Avatar">
+                    </div>
+                    <div class="avatar-option" data-avatar="assets/avatar1.png">
+                        <img src="assets/avatar1.png" alt="Avatar 1">
+                    </div>
+                    <div class="avatar-option" data-avatar="assets/avatar2.png">
+                        <img src="assets/avatar2.png" alt="Avatar 2">
+                    </div>
+                    <div class="avatar-option" data-avatar="assets/avatar3.png">
+                        <img src="assets/avatar3.png" alt="Avatar 3">
+                    </div>
+                    <div class="avatar-option" data-avatar="assets/avatar4.png">
+                        <img src="assets/avatar4.png" alt="Avatar 4">
+                    </div>
+                    <div class="avatar-option" data-avatar="assets/avatar5.png">
+                        <img src="assets/avatar5.png" alt="Avatar 5">
+                    </div>
+                </div>
+                <button class="save-avatar-btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/profile.js"></script>
+</body>
+</html> 

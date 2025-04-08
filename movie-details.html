@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Details - CineVerse</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+    <link rel="manifest" href="assets/site.webmanifest">
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/movie-details.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <div class="nav-logo">
+            <a href="index.html">
+                <h1>CineVerse</h1>
+            </a>
+        </div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="movies.html" class="active">Movies</a>
+            <a href="tv-shows.html">TV Shows</a>
+            <a href="new-popular.html">New & Popular</a>
+            <a href="categories.html">Categories</a>
+        </div>
+        <div class="nav-search">
+            <input type="text" placeholder="Search movies, TV shows...">
+            <button><i class="fas fa-search"></i></button>
+        </div>
+        <div class="nav-profile">
+            <img src="assets/default-avatar.png" alt="Profile">
+        </div>
+    </nav>
+
+    <!-- Movie backdrop image -->
+    <div class="movie-backdrop"></div>
+
+    <!-- Movie header section -->
+    <div class="movie-header">
+        <div class="movie-top-content">
+            <div class="movie-poster">
+                <img src="" alt="Movie Poster" id="movie-poster">
+            </div>
+            <div class="movie-info">
+                <h1 id="movie-title" class="movie-title"></h1>
+                <div class="movie-meta">
+                    <span id="movie-year" class="movie-year"></span>
+                    <span id="movie-runtime" class="movie-runtime"></span>
+                    <span id="movie-rating" class="movie-rating"></span>
+                </div>
+                <p id="movie-tagline" class="movie-tagline"></p>
+                <p id="movie-overview" class="movie-overview"></p>
+                <div class="movie-actions">
+                    <button class="play-button">
+                        <i class="fas fa-play"></i> Watch Now
+                    </button>
+                    <button class="add-list-button">
+                        <i class="fas fa-plus"></i> Add to List
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Trailer and Similar Movies directly below movie info -->
+    <div class="trailer-and-similar">
+        <div class="trailer-section">
+            <h2>Trailer</h2>
+            <div class="trailer-container" id="trailer-container">
+                <!-- Trailer will be dynamically loaded here -->
+            </div>
+        </div>
+        
+        <div class="similar-section">
+            <h2>Similar Movies</h2>
+            <div class="similar-movies" id="similar-movies">
+                <!-- Similar movies will be dynamically loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Movie details grid -->
+    <div class="movie-details-grid">
+        <div class="streaming-section">
+            <h2>Where to Watch</h2>
+            <div class="streaming-options" id="streaming-options">
+                <!-- Streaming options will be dynamically loaded here -->
+            </div>
+        </div>
+
+        <div class="cast-section">
+            <h2>Cast</h2>
+            <div class="cast-list" id="cast-list">
+                <!-- Cast members will be dynamically loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Back to top button -->
+    <button id="back-to-top" class="back-to-top">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/movie-details.js"></script>
+</body>
+</html> 

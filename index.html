@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineVerse - Your Ultimate Movie & TV Show Companion</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+    <link rel="manifest" href="assets/site.webmanifest">
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="loading-screen">
+        <div class="cyber-spinner"></div>
+        <p>Initializing Korden's CineVerse....</p>
+    </div>
+
+    <nav class="main-nav">
+        <div class="nav-logo">
+            <a href="index.html">
+                <h1>CineVerse</h1>
+            </a>
+        </div>
+        <div class="nav-links">
+            <a href="index.html" class="active">Home</a>
+            <a href="movies.html">Movies</a>
+            <a href="tv-shows.html">TV Shows</a>
+            <a href="new-popular.html">New & Popular</a>
+            <a href="categories.html">Categories</a>
+        </div>
+        <div class="nav-search">
+            <input type="text" placeholder="Search movies, TV shows...">
+            <button><i class="fas fa-search"></i></button>
+        </div>
+        <div class="nav-profile">
+            <img src="assets/default-avatar.png" alt="Profile">
+        </div>
+    </nav>
+
+    <header class="hero-section">
+        <div class="hero-content">
+            <h2>Welcome to the Future of Streaming</h2>
+            <p>Discover the latest movies and TV shows in stunning quality</p>
+            <button class="cta-button">Start Streaming</button>
+        </div>
+    </header>
+
+    <main>
+        <section class="trending-section">
+            <h2>Trending Now</h2>
+            <div class="movie-grid" id="trending-movies">
+                <!-- Movies will be dynamically loaded here -->
+            </div>
+        </section>
+
+        <section class="new-releases">
+            <h2>New Releases</h2>
+            <div class="movie-grid" id="new-releases">
+                <!-- New releases will be dynamically loaded here -->
+            </div>
+        </section>
+
+        <section class="top-rated">
+            <h2>Top Rated</h2>
+            <div class="movie-grid" id="top-rated">
+                <!-- Top rated movies will be dynamically loaded here -->
+            </div>
+        </section>
+    </main>
+
+    <footer class="main-footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>About CineVerse</h3>
+                <p>Your ultimate destination for movies and TV shows</p>
+            </div>
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="#">FAQ</a></li>
+                    <li><a href="#">Help Center</a></li>
+                    <li><a href="#">Terms of Service</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Connect With Us</h3>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 CineVerse. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <div class="movie-modal" id="movie-modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-body">
+                <!-- Movie details will be dynamically loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/main.js"></script>
+    <button id="back-to-top" title="Back to Top">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+</body>
+</html> 
