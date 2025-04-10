@@ -678,4 +678,85 @@ function showNotification(message, type = 'success') {
             notification.remove();
         }, 300);
     }, 3000);
-} 
+}
+
+// Handle profile picture upload
+const profilePictureInput = document.getElementById('profile-picture');
+const profilePicturePreview = document.getElementById('profile-picture-preview');
+
+profilePictureInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            showNotification('Please upload an image file', 'error');
+            return;
+        }
+        
+        // Validate file size (5MB limit)
+        if (file.size > 5 * 1024 * 1024) {
+            showNotification('File size should be less than 5MB', 'error');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const imageData = e.target.result;
+            
+            // Update user data in localStorage
+            const currentUser = JSON.parse(localStorage.getItem('cineverse_current_user')) || {};
+            currentUser.avatar = imageData;
+            localStorage.setItem('cineverse_current_user', JSON.stringify(currentUser));
+            
+            // Update auth user data
+            if (typeof auth !== 'undefined' && auth.getCurrentUser()) {
+                auth.updateProfile({ avatar: imageData });
+            }
+            
+            // Update all profile images on the current page
+            if (typeof updateAllProfileImages === 'function') {
+                updateAllProfileImages(imageData);
+            } else {
+                const allProfileImages = document.querySelectorAll('.nav-profile img, .profile-avatar img, #profile-avatar-img, #profile-picture-preview');
+                allProfileImages.forEach(img => img.src = imageData);
+            }
+            
+            // Broadcast the change to other tabs/windows
+            window.dispatchEvent(new StorageEvent('storage', {
+                key: 'cineverse_current_user',
+                newValue: JSON.stringify(currentUser)
+            }));
+            
+            showNotification('Profile picture updated successfully');
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// Update profile pictures when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    const currentUser = JSON.parse(localStorage.getItem('cineverse_current_user'));
+    if (currentUser && currentUser.avatar) {
+        if (typeof updateAllProfileImages === 'function') {
+            updateAllProfileImages(currentUser.avatar);
+        } else {
+            const allProfileImages = document.querySelectorAll('.nav-profile img, .profile-avatar img, #profile-avatar-img, #profile-picture-preview');
+            allProfileImages.forEach(img => img.src = currentUser.avatar);
+        }
+    }
+});
+
+// Listen for profile picture changes from other tabs/windows
+window.addEventListener('storage', (e) => {
+    if (e.key === 'cineverse_current_user') {
+        const userData = JSON.parse(e.newValue);
+        if (userData && userData.avatar) {
+            if (typeof updateAllProfileImages === 'function') {
+                updateAllProfileImages(userData.avatar);
+            } else {
+                const allProfileImages = document.querySelectorAll('.nav-profile img, .profile-avatar img, #profile-avatar-img, #profile-picture-preview');
+                allProfileImages.forEach(img => img.src = userData.avatar);
+            }
+        }
+    }
+}); 
