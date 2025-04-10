@@ -396,4 +396,41 @@ function updateProfileDropdown() {
         loginButton.style.display = 'flex';
         logoutButton.style.display = 'none';
     }
-} 
+}
+
+// Auto-hide navigation bar
+let lastScrollTop = 0;
+const nav = document.querySelector('.main-nav');
+const scrollThreshold = 100; // Minimum scroll amount before hiding
+const hideDelay = 1000; // Delay before hiding nav after scrolling stops
+
+let hideTimeout;
+
+function handleScroll() {
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    
+    // Clear any existing timeout
+    clearTimeout(hideTimeout);
+    
+    // Show nav immediately when scrolling up or at the top
+    if (scrollTop < lastScrollTop || scrollTop < scrollThreshold) {
+        nav.classList.remove('nav-hidden');
+    } else {
+        // Set a timeout to hide the nav after scrolling stops
+        hideTimeout = setTimeout(() => {
+            nav.classList.add('nav-hidden');
+        }, hideDelay);
+    }
+    
+    lastScrollTop = scrollTop;
+}
+
+// Add scroll event listener
+window.addEventListener('scroll', handleScroll);
+
+// Show nav when mouse is near the top of the page
+document.addEventListener('mousemove', (e) => {
+    if (e.clientY < 50) {
+        nav.classList.remove('nav-hidden');
+    }
+}); 
