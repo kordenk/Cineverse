@@ -382,20 +382,77 @@ function updateProfileDropdown() {
     const loginButton = document.querySelector('.login-button');
     const logoutButton = document.querySelector('.logout-button');
     
-    if (typeof auth !== 'undefined' && auth.isLoggedIn()) {
-        const user = auth.getCurrentUser();
-        navProfileImg.src = user.avatar;
-        dropdownUsername.textContent = user.username;
-        dropdownEmail.textContent = user.email;
+    // Always get the latest user data from localStorage
+    const savedUser = JSON.parse(localStorage.getItem('cineverse_current_user'));
+    
+    if (savedUser && typeof auth !== 'undefined' && auth.isLoggedIn()) {
+        // Update all profile images on the page
+        const allProfileImages = document.querySelectorAll('.nav-profile img, .profile-avatar img');
+        allProfileImages.forEach(img => {
+            img.src = savedUser.avatar || 'assets/default-avatar.png';
+        });
+        
+        dropdownUsername.textContent = savedUser.username;
+        dropdownEmail.textContent = savedUser.email;
         loginButton.style.display = 'none';
         logoutButton.style.display = 'flex';
+        
+        // Update any profile-specific elements if they exist
+        const profileUsername = document.getElementById('profile-username');
+        const profileEmail = document.getElementById('profile-email');
+        if (profileUsername) profileUsername.textContent = savedUser.username;
+        if (profileEmail) profileEmail.textContent = savedUser.email;
     } else {
-        navProfileImg.src = 'assets/default-avatar.png';
+        // Reset all profile images to default
+        const allProfileImages = document.querySelectorAll('.nav-profile img, .profile-avatar img');
+        allProfileImages.forEach(img => {
+            img.src = 'assets/default-avatar.png';
+        });
+        
         dropdownUsername.textContent = 'Guest';
         dropdownEmail.textContent = 'Not logged in';
         loginButton.style.display = 'flex';
         logoutButton.style.display = 'none';
     }
+}
+
+// Global function to update all profile pictures
+function updateAllProfileImages(imageUrl) {
+    const allProfileImages = document.querySelectorAll('.nav-profile img, .profile-avatar img, #profile-avatar-img, #profile-picture-preview');
+    allProfileImages.forEach(img => {
+        img.src = imageUrl || 'assets/default-avatar.png';
+    });
+}
+
+// Listen for profile picture changes
+window.addEventListener('storage', (e) => {
+    if (e.key === 'cineverse_current_user') {
+        const userData = JSON.parse(e.newValue);
+        if (userData && userData.avatar) {
+            updateAllProfileImages(userData.avatar);
+        }
+        updateProfileDropdown();
+    }
+});
+
+// Initialize profile data when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    updateProfileDropdown();
+    const savedUser = JSON.parse(localStorage.getItem('cineverse_current_user'));
+    if (savedUser && savedUser.avatar) {
+        updateAllProfileImages(savedUser.avatar);
+    }
+});
+
+// Update profile when auth state changes
+if (typeof auth !== 'undefined') {
+    auth.onAuthStateChanged(() => {
+        updateProfileDropdown();
+        const savedUser = JSON.parse(localStorage.getItem('cineverse_current_user'));
+        if (savedUser && savedUser.avatar) {
+            updateAllProfileImages(savedUser.avatar);
+        }
+    });
 }
 
 // Auto-hide navigation bar
