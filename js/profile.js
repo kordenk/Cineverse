@@ -187,8 +187,14 @@ function initializeAvatarChange() {
     const closeAvatar = document.querySelector('.close-avatar');
     const avatarOptions = document.querySelectorAll('.avatar-option');
     const saveAvatarBtn = document.querySelector('.save-avatar-btn');
+    const customAvatarInput = document.getElementById('custom-avatar-input');
+    const previewContainer = document.querySelector('.preview-container');
+    const avatarPreview = document.getElementById('avatar-preview');
+    const removePreviewBtn = document.querySelector('.remove-preview');
+    const uploadLabel = document.querySelector('.upload-label');
     
     let selectedAvatar = null;
+    let customImageFile = null;
     
     // Open modal
     avatarChangeBtn.addEventListener('click', () => {
@@ -204,11 +210,15 @@ function initializeAvatarChange() {
                 option.classList.remove('selected');
             }
         });
+        
+        // Reset custom upload
+        resetCustomUpload();
     });
     
     // Close modal
     closeAvatar.addEventListener('click', () => {
         avatarModal.classList.remove('active');
+        resetCustomUpload();
     });
     
     // Select avatar
@@ -217,28 +227,113 @@ function initializeAvatarChange() {
             avatarOptions.forEach(opt => opt.classList.remove('selected'));
             option.classList.add('selected');
             selectedAvatar = option.dataset.avatar;
+            
+            // Reset custom upload when selecting a preset avatar
+            resetCustomUpload();
         });
     });
     
+    // Handle custom image upload
+    customAvatarInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                showNotification('Please upload an image file', 'error');
+                return;
+            }
+            
+            // Validate file size (5MB limit)
+            if (file.size > 5 * 1024 * 1024) {
+                showNotification('File size should be less than 5MB', 'error');
+                return;
+            }
+            
+            // Deselect preset avatars
+            avatarOptions.forEach(opt => opt.classList.remove('selected'));
+            selectedAvatar = null;
+            
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                avatarPreview.src = e.target.result;
+                previewContainer.classList.remove('hidden');
+                uploadLabel.classList.add('hidden');
+                customImageFile = file;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    // Remove custom image preview
+    removePreviewBtn.addEventListener('click', () => {
+        resetCustomUpload();
+    });
+    
     // Save avatar
-    saveAvatarBtn.addEventListener('click', () => {
-        if (selectedAvatar) {
-            try {
-                auth.updateProfile({
+    saveAvatarBtn.addEventListener('click', async () => {
+        try {
+            if (customImageFile) {
+                // Handle custom image upload
+                const formData = new FormData();
+                formData.append('avatar', customImageFile);
+                
+                // Upload the image and get the URL
+                const avatarUrl = await uploadCustomAvatar(formData);
+                
+                // Update profile with new avatar URL
+                await auth.updateProfile({
+                    avatar: avatarUrl
+                });
+                
+                // Update UI
+                updateAvatarInUI(avatarUrl);
+            } else if (selectedAvatar) {
+                // Update profile with selected preset avatar
+                await auth.updateProfile({
                     avatar: selectedAvatar
                 });
                 
-                // Update avatar in UI
-                document.getElementById('profile-avatar-img').src = selectedAvatar;
-                document.getElementById('nav-profile-img').src = selectedAvatar;
-                
-                showNotification('Avatar updated successfully');
-                avatarModal.classList.remove('active');
-            } catch (error) {
-                showNotification(error.message, 'error');
+                // Update UI
+                updateAvatarInUI(selectedAvatar);
             }
+            
+            showNotification('Profile picture updated successfully');
+            avatarModal.classList.remove('active');
+        } catch (error) {
+            showNotification(error.message, 'error');
         }
     });
+    
+    function resetCustomUpload() {
+        customAvatarInput.value = '';
+        previewContainer.classList.add('hidden');
+        uploadLabel.classList.remove('hidden');
+        customImageFile = null;
+    }
+    
+    function updateAvatarInUI(avatarUrl) {
+        document.getElementById('profile-avatar-img').src = avatarUrl;
+        document.getElementById('nav-profile-img').src = avatarUrl;
+    }
+}
+
+// Function to handle custom avatar upload
+async function uploadCustomAvatar(formData) {
+    try {
+        // In a real application, you would upload the image to a server
+        // and get back a URL. For this example, we'll create a local URL
+        const file = formData.get('avatar');
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                resolve(e.target.result);
+            };
+            reader.readAsDataURL(file);
+        });
+    } catch (error) {
+        throw new Error('Failed to upload image. Please try again.');
+    }
 }
 
 // Watchlist
