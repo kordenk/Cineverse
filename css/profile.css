@@ -683,47 +683,48 @@ input:checked + .slider:before {
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.8);
-    z-index: 100;
-    justify-content: center;
-    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
 }
 
 .avatar-modal.active {
     display: flex;
-    animation: fadeIn 0.3s ease;
+    justify-content: center;
+    align-items: center;
 }
 
 .avatar-container {
-    background: rgba(10, 10, 15, 0.95);
+    background: var(--background-light);
     border-radius: 15px;
-    width: 100%;
-    max-width: 500px;
-    overflow: hidden;
-    box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
-    border: 1px solid rgba(0, 255, 255, 0.1);
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    border: 1px solid var(--primary-color);
+    box-shadow: 0 0 30px rgba(0, 242, 255, 0.2);
 }
 
 .avatar-header {
     padding: 1.5rem;
-    border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(0, 242, 255, 0.1);
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
 .avatar-header h3 {
-    color: var(--text-color);
-    margin: 0;
     font-family: 'Orbitron', sans-serif;
+    color: var(--primary-color);
+    margin: 0;
 }
 
 .close-avatar {
     background: none;
     border: none;
-    color: var(--text-secondary);
-    font-size: 1.2rem;
+    color: var(--text-primary);
+    font-size: 1.5rem;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: color 0.3s ease;
 }
 
 .close-avatar:hover {
@@ -734,54 +735,151 @@ input:checked + .slider:before {
     padding: 2rem;
 }
 
-.avatars-grid {
+.avatar-options {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     gap: 1rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
 }
 
 .avatar-option {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    overflow: hidden;
+    position: relative;
     cursor: pointer;
-    transition: all 0.3s ease;
-    border: 3px solid transparent;
-}
-
-.avatar-option:hover {
-    transform: scale(1.05);
-}
-
-.avatar-option.selected {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .avatar-option img {
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+}
+
+.avatar-option:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
+}
+
+.avatar-option.selected {
+    border: 2px solid var(--primary-color);
+    box-shadow: 0 0 20px rgba(0, 242, 255, 0.4);
+}
+
+/* Custom Avatar Upload Styles */
+.custom-avatar-upload {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(0, 242, 255, 0.1);
+}
+
+.custom-avatar-upload h4 {
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.upload-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.hidden {
+    display: none;
+}
+
+.upload-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.5rem;
+    border: 2px dashed var(--primary-color);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    max-width: 300px;
+}
+
+.upload-label:hover {
+    background: rgba(0, 242, 255, 0.1);
+}
+
+.upload-label i {
+    font-size: 2rem;
+    color: var(--primary-color);
+}
+
+.upload-label span {
+    color: var(--text-primary);
+}
+
+.preview-container {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid var(--primary-color);
+}
+
+.preview-container img {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
-.save-avatar-btn {
-    width: 100%;
-    background: linear-gradient(45deg, #0088ff, #00ddff);
+.remove-preview {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(0, 0, 0, 0.7);
     border: none;
-    padding: 0.8rem;
-    border-radius: 8px;
     color: white;
-    font-weight: 600;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s ease;
+}
+
+.remove-preview:hover {
+    background: var(--danger-color);
+}
+
+.upload-info {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    text-align: center;
+    margin-top: 1rem;
+}
+
+.avatar-footer {
+    padding: 1.5rem;
+    border-top: 1px solid rgba(0, 242, 255, 0.1);
+    text-align: center;
+}
+
+.save-avatar-btn {
+    background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+    border: none;
+    padding: 0.8rem 2rem;
+    color: var(--text-primary);
+    border-radius: 25px;
+    cursor: pointer;
+    font-family: 'Orbitron', sans-serif;
     transition: all 0.3s ease;
-    font-size: 1rem;
 }
 
 .save-avatar-btn:hover {
-    background: linear-gradient(45deg, #00ddff, #0088ff);
-    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(0, 242, 255, 0.4);
 }
 
 /* Empty State Styles */
