@@ -401,8 +401,8 @@ function updateProfileDropdown() {
 // Auto-hide navigation bar
 let lastScrollTop = 0;
 const nav = document.querySelector('.main-nav');
-const scrollThreshold = 100; // Minimum scroll amount before hiding
-const hideDelay = 1000; // Delay before hiding nav after scrolling stops
+const scrollThreshold = 50; // Reduced threshold for faster response
+const hideDelay = 500; // Reduced delay for quicker hiding
 
 let hideTimeout;
 
@@ -415,18 +415,29 @@ function handleScroll() {
     // Show nav immediately when scrolling up or at the top
     if (scrollTop < lastScrollTop || scrollTop < scrollThreshold) {
         nav.classList.remove('nav-hidden');
-    } else {
+    } else if (scrollTop > lastScrollTop) {
         // Set a timeout to hide the nav after scrolling stops
         hideTimeout = setTimeout(() => {
-            nav.classList.add('nav-hidden');
+            if (scrollTop > scrollThreshold) {
+                nav.classList.add('nav-hidden');
+            }
         }, hideDelay);
     }
     
     lastScrollTop = scrollTop;
 }
 
-// Add scroll event listener
-window.addEventListener('scroll', handleScroll);
+// Add scroll event listener with throttling
+let ticking = false;
+window.addEventListener('scroll', () => {
+    if (!ticking) {
+        window.requestAnimationFrame(() => {
+            handleScroll();
+            ticking = false;
+        });
+        ticking = true;
+    }
+});
 
 // Show nav when mouse is near the top of the page
 document.addEventListener('mousemove', (e) => {
