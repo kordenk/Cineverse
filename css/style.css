@@ -56,15 +56,19 @@ body {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    padding: 1rem 2rem;
-    background: rgba(10, 10, 10, 0.95);
-    backdrop-filter: blur(10px);
+    right: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    z-index: 100;
-    border-bottom: 1px solid rgba(0, 242, 255, 0.1);
+    padding: 1rem 2rem;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    transition: transform 0.3s ease-in-out;
+}
+
+.main-nav.nav-hidden {
+    transform: translateY(-100%);
 }
 
 .nav-logo a {
