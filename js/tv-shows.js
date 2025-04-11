@@ -1,5 +1,5 @@
 // Initialize API
-const api = new MovieAPI();
+// const api = new MovieAPI();
 
 let currentPage = 1;
 let currentFilters = {
@@ -81,7 +81,7 @@ async function loadFeaturedShows() {
 }
 
 function createFeaturedShowCard(show) {
-    const backdropPath = show.backdrop_path ? api.getImageUrl(show.backdrop_path, 'original') : 'images/no-image.png';
+    const backdropPath = show.backdrop_path ? api.getImageUrl(show.backdrop_path, 'original') : 'assets/placeholder.jpg';
     return `
         <div class="featured-show-card" data-id="${show.id}">
             <img src="${backdropPath}" alt="${show.name}">
@@ -285,7 +285,7 @@ function updateShowsGrid(shows) {
 }
 
 function createShowCard(show) {
-    const posterPath = show.poster_path ? api.getImageUrl(show.poster_path, 'w342') : 'images/no-image.png';
+    const posterPath = show.poster_path ? api.getImageUrl(show.poster_path, 'w342') : 'assets/placeholder.jpg';
     return `
         <div class="show-card" data-id="${show.id}">
             <img src="${posterPath}" alt="${show.name}">

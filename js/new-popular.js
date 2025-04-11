@@ -1,5 +1,5 @@
 // Initialize API
-const api = new MovieAPI();
+// const api = new MovieAPI();
 let currentPage = 1;
 let currentSection = 'trending';
 
@@ -60,16 +60,38 @@ async function loadContent(section) {
 
         switch (section) {
             case 'trending':
-                data = await api.getTrendingMovies('week');
+                data = await api.fetchData('/trending/all/week');
                 break;
             case 'upcoming':
                 data = await api.getUpcomingMovies(currentPage);
                 break;
             case 'new-releases':
-                data = await api.getNowPlayingMovies(currentPage);
+                const [movies, tvShows] = await Promise.all([
+                    api.getNowPlayingMovies(currentPage),
+                    api.fetchData('/tv/on_the_air', { page: currentPage })
+                ]);
+                data = {
+                    results: [...movies.results, ...tvShows.results].sort((a, b) => {
+                        const dateA = new Date(a.release_date || a.first_air_date);
+                        const dateB = new Date(b.release_date || b.first_air_date);
+                        return dateB - dateA;
+                    }),
+                    page: currentPage,
+                    total_pages: Math.max(movies.total_pages, tvShows.total_pages)
+                };
                 break;
             case 'top-rated':
-                data = await api.getTopRatedMovies(currentPage);
+                const [topMovies, topTVShows] = await Promise.all([
+                    api.getTopRatedMovies(currentPage),
+                    api.fetchData('/tv/top_rated', { page: currentPage })
+                ]);
+                data = {
+                    results: [...topMovies.results, ...topTVShows.results].sort((a, b) => 
+                        b.vote_average - a.vote_average
+                    ),
+                    page: currentPage,
+                    total_pages: Math.max(topMovies.total_pages, topTVShows.total_pages)
+                };
                 break;
             default:
                 throw new Error('Invalid section');
