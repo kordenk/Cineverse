@@ -1,6 +1,0 @@
-This favicon was generated using the following font:
-
-- Font Title: Copse
-- Font Author: undefined
-- Font Source: https://fonts.gstatic.com/s/copse/v15/11hPGpDKz1rGb0djHkihUb-A.ttf
-- Font License: undefined)
