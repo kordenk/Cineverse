@@ -111,15 +111,17 @@ class MovieAPI {
 
     // TV Shows methods
     async getTVShowDetails(id) {
-        return this.fetchData(`/tv/${id}`, { append_to_response: 'videos,credits,similar' });
+        return this.fetchData(`${config.ENDPOINTS.TV}/${id}`, {
+            append_to_response: 'videos,credits,similar'
+        });
     }
 
     async getTVGenres() {
-        return this.fetchData('/genre/tv/list');
+        return this.fetchData(config.ENDPOINTS.TV_GENRES);
     }
 
-    async discoverTVShows(params = {}) {
-        return this.fetchData('/discover/tv', params);
+    async discoverTVShows(params) {
+        return this.fetchData(config.ENDPOINTS.DISCOVER_TV, params);
     }
 
     async getTVShowSeasons(id) {
@@ -131,11 +133,14 @@ class MovieAPI {
     }
 
     async getTVNetworks() {
-        return this.fetchData('/network');
+        return this.fetchData(config.ENDPOINTS.NETWORKS);
     }
 
     async searchTVShows(query, page = 1) {
-        return this.fetchData('/search/tv', { query, page });
+        return this.fetchData(config.ENDPOINTS.SEARCH_TV, {
+            query,
+            page
+        });
     }
 
     async getTrendingTVShows(timeWindow = 'day') {
@@ -143,7 +148,10 @@ class MovieAPI {
     }
 
     async getPopularTVShows(page = 1) {
-        return this.fetchData('/tv/popular', { page });
+        return this.fetchData(config.ENDPOINTS.DISCOVER_TV, {
+            sort_by: 'popularity.desc',
+            page
+        });
     }
 
     async getTopRatedTVShows(page = 1) {
@@ -159,15 +167,15 @@ class MovieAPI {
     }
 
     async getTVShowWatchProviders(id) {
-        return this.fetchData(`/tv/${id}/watch/providers`);
+        return this.fetchData(`${config.ENDPOINTS.TV}/${id}/watch/providers`);
     }
 
     async getTVShowCredits(id) {
-        return this.fetchData(`/tv/${id}/credits`);
+        return this.fetchData(`${config.ENDPOINTS.TV}/${id}/credits`);
     }
 
     async getTVShowVideos(id) {
-        return this.fetchData(`/tv/${id}/videos`);
+        return this.fetchData(`${config.ENDPOINTS.TV}/${id}/videos`);
     }
 
     // Watchmode API Methods
@@ -282,6 +290,14 @@ class MovieAPI {
                 ]
             };
         }
+    }
+
+    async getTVSeasonDetails(showId, seasonNumber) {
+        return this.fetchData(`${config.ENDPOINTS.TV}/${showId}/season/${seasonNumber}`);
+    }
+
+    async getStreamingProviders(showId) {
+        return this.fetchData(`${config.ENDPOINTS.TV}/${showId}/watch/providers`);
     }
 }
 

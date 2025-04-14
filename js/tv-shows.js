@@ -1,5 +1,5 @@
 // Initialize API
-// const api = new MovieAPI();
+const api = new MovieAPI();
 
 let currentPage = 1;
 let currentFilters = {
@@ -11,32 +11,10 @@ let currentFilters = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize the page
     initializeTVShowsPage();
-    // Initialize back to top button
     initializeBackToTop();
+    setupEventListeners();
 });
-
-function initializeBackToTop() {
-    const backToTopButton = document.getElementById('back-to-top');
-    
-    // Show button when scrolling down
-    window.addEventListener('scroll', () => {
-        if (window.scrollY > 300) {
-            backToTopButton.classList.add('visible');
-        } else {
-            backToTopButton.classList.remove('visible');
-        }
-    });
-    
-    // Smooth scroll to top when clicked
-    backToTopButton.addEventListener('click', () => {
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        });
-    });
-}
 
 async function initializeTVShowsPage() {
     try {
@@ -49,7 +27,6 @@ async function initializeTVShowsPage() {
             populateStatusFilter(),
             loadTVShows()
         ]);
-        setupEventListeners();
         document.body.classList.remove('loading');
     } catch (error) {
         console.error('Error initializing TV Shows page:', error);
@@ -60,11 +37,7 @@ async function initializeTVShowsPage() {
 
 async function loadFeaturedShows() {
     try {
-        const response = await api.discoverTVShows({ 
-            sort_by: 'popularity.desc', 
-            page: 1,
-            'vote_count.gte': 100 // Ensure we get shows with significant votes
-        });
+        const response = await api.getPopularTVShows(1);
         
         if (!response.results || response.results.length === 0) {
             throw new Error('No featured shows available');
@@ -72,28 +45,40 @@ async function loadFeaturedShows() {
 
         const featuredShows = response.results.slice(0, 3);
         const featuredGrid = document.querySelector('.featured-grid');
-        
         featuredGrid.innerHTML = featuredShows.map(show => createFeaturedShowCard(show)).join('');
+
+        // Add click event listeners to featured shows
+        featuredGrid.querySelectorAll('.featured-show-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const showId = card.dataset.id;
+                window.location.href = `tv-show-details.html?id=${showId}`;
+            });
+        });
     } catch (error) {
         console.error('Error loading featured shows:', error);
-        throw new Error('Failed to load featured shows.');
+        showError('Failed to load featured shows.');
     }
 }
 
 function createFeaturedShowCard(show) {
-    const backdropPath = show.backdrop_path ? api.getImageUrl(show.backdrop_path, 'original') : 'assets/placeholder.jpg';
+    const backdropPath = show.backdrop_path 
+        ? api.getImageUrl(show.backdrop_path, 'original') 
+        : 'assets/placeholder.jpg';
+    
     return `
-        <div class="featured-show-card" data-id="${show.id}">
-            <img src="${backdropPath}" alt="${show.name}">
-            <div class="featured-show-info">
-                <h3>${show.name}</h3>
-                <div class="featured-show-meta">
-                    <span>${show.first_air_date?.split('-')[0] || 'N/A'}</span>
-                    <span>${show.vote_average ? show.vote_average.toFixed(1) : 'N/A'} ★</span>
+        <a href="tv-show-details.html?id=${show.id}" class="featured-show-card-link">
+            <div class="featured-show-card" data-id="${show.id}">
+                <img src="${backdropPath}" alt="${show.name}">
+                <div class="featured-show-info">
+                    <h3>${show.name}</h3>
+                    <div class="featured-show-meta">
+                        <span>${show.first_air_date?.split('-')[0] || 'N/A'}</span>
+                        <span>${show.vote_average ? show.vote_average.toFixed(1) : 'N/A'} ★</span>
+                    </div>
+                    <p class="featured-show-overview">${show.overview || 'No overview available.'}</p>
                 </div>
-                <p class="featured-show-overview">${show.overview || 'No overview available.'}</p>
             </div>
-        </div>
+        </a>
     `;
 }
 
@@ -105,17 +90,22 @@ async function populateGenreFilters() {
             throw new Error('No genres available');
         }
 
-        const genreContainer = document.querySelector('.genre-filters');
+        const genreContainer = document.querySelector('.genre-section .genre-filters');
+        if (!genreContainer) {
+            console.error('Genre container not found');
+            return;
+        }
+
         genreContainer.innerHTML = response.genres.map(genre => `
             <label class="genre-checkbox">
-                <input type="checkbox" value="${genre.id}">
+                <input type="checkbox" value="${genre.id}" name="genre">
                 <span class="checkmark"></span>
                 ${genre.name}
             </label>
         `).join('');
     } catch (error) {
         console.error('Error loading genres:', error);
-        throw new Error('Failed to load genre filters.');
+        showError('Failed to load genre filters.');
     }
 }
 
@@ -123,14 +113,14 @@ async function populateNetworkFilters() {
     try {
         const response = await api.getTVNetworks();
         
-        if (!response.results || response.results.length === 0) {
+        if (!response.networks || response.networks.length === 0) {
             throw new Error('No networks available');
         }
 
         const networkSelect = document.querySelector('#network-select');
         networkSelect.innerHTML = `
             <option value="">All Networks</option>
-            ${response.results.map(network => `
+            ${response.networks.map(network => `
                 <option value="${network.id}">${network.name}</option>
             `).join('')}
         `;
@@ -171,176 +161,153 @@ function populateStatusFilter() {
 
 function setupEventListeners() {
     // Sort change
-    document.querySelector('#sort-select').addEventListener('change', (e) => {
+    document.getElementById('sort-select').addEventListener('change', (e) => {
         currentFilters.sort_by = e.target.value;
         currentPage = 1;
         loadTVShows();
     });
 
-    // Genre checkboxes
-    document.querySelectorAll('.genre-checkbox input').forEach(checkbox => {
-        checkbox.addEventListener('change', () => {
-            const checkedGenres = Array.from(document.querySelectorAll('.genre-checkbox input:checked'))
-                .map(input => input.value);
-            currentFilters.with_genres = checkedGenres;
+    // Genre changes
+    document.querySelector('.genre-filters').addEventListener('change', (e) => {
+        if (e.target.type === 'checkbox') {
+            const genreId = e.target.value;
+            if (e.target.checked) {
+                currentFilters.with_genres.push(genreId);
+            } else {
+                currentFilters.with_genres = currentFilters.with_genres.filter(id => id !== genreId);
+            }
             currentPage = 1;
             loadTVShows();
-        });
-    });
-
-    // Year change
-    document.querySelector('#year-select').addEventListener('change', (e) => {
-        currentFilters.first_air_date_year = e.target.value;
-        currentPage = 1;
-        loadTVShows();
-    });
-
-    // Network change
-    document.querySelector('#network-select').addEventListener('change', (e) => {
-        currentFilters.with_networks = e.target.value ? [e.target.value] : [];
-        currentPage = 1;
-        loadTVShows();
+        }
     });
 
     // Status change
-    document.querySelector('#status-select').addEventListener('change', (e) => {
+    document.getElementById('status-select').addEventListener('change', (e) => {
         currentFilters.with_status = e.target.value;
         currentPage = 1;
         loadTVShows();
     });
 
-    // Search input
-    const searchInput = document.querySelector('.nav-search input');
-    const searchButton = document.querySelector('.nav-search button');
-
-    searchButton.addEventListener('click', () => {
-        handleSearch(searchInput.value);
+    // Network change
+    document.getElementById('network-select').addEventListener('change', (e) => {
+        currentFilters.with_networks = e.target.value ? [e.target.value] : [];
+        currentPage = 1;
+        loadTVShows();
     });
 
+    // Year change
+    document.getElementById('year-select').addEventListener('change', (e) => {
+        currentFilters.first_air_date_year = e.target.value;
+        currentPage = 1;
+        loadTVShows();
+    });
+
+    // Search functionality
+    const searchInput = document.getElementById('search-input');
+    const searchButton = document.getElementById('search-button');
+
+    const handleSearch = async () => {
+        const query = searchInput.value.trim();
+        if (query) {
+            try {
+                document.body.classList.add('loading');
+                const response = await api.searchTVShows(query);
+                updateShowsGrid(response.results);
+                document.body.classList.remove('loading');
+            } catch (error) {
+                console.error('Error searching shows:', error);
+                showError('Failed to search TV shows.');
+                document.body.classList.remove('loading');
+            }
+        } else {
+            loadTVShows();
+        }
+    };
+
+    searchButton.addEventListener('click', handleSearch);
     searchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-            handleSearch(searchInput.value);
+            handleSearch();
         }
     });
 
     // Pagination
-    document.querySelector('.pagination').addEventListener('click', (e) => {
-        if (e.target.closest('.prev-page') && currentPage > 1) {
+    document.querySelector('.prev-page').addEventListener('click', () => {
+        if (currentPage > 1) {
             currentPage--;
             loadTVShows();
-        } else if (e.target.closest('.next-page')) {
-            currentPage++;
-            loadTVShows();
         }
     });
 
-    // Featured show clicks
-    document.querySelector('.featured-grid').addEventListener('click', (e) => {
-        const featuredCard = e.target.closest('.featured-show-card');
-        if (featuredCard) {
-            const showId = featuredCard.dataset.id;
-            window.location.href = `tv-show-details.html?id=${showId}`;
-        }
-    });
-
-    // Regular show card clicks
-    document.querySelector('.shows-grid').addEventListener('click', (e) => {
-        const showCard = e.target.closest('.show-card');
-        if (showCard) {
-            const showId = showCard.dataset.id;
-            window.location.href = `tv-show-details.html?id=${showId}`;
-        }
+    document.querySelector('.next-page').addEventListener('click', () => {
+        currentPage++;
+        loadTVShows();
     });
 }
 
 async function loadTVShows() {
     try {
-        document.body.classList.add('loading');
-        const params = { ...currentFilters, page: currentPage };
+        const params = {
+            ...currentFilters,
+            page: currentPage
+        };
+
+        if (currentFilters.with_genres.length) {
+            params.with_genres = currentFilters.with_genres.join(',');
+        }
+
         const response = await api.discoverTVShows(params);
         
-        if (!response.results || response.results.length === 0) {
+        if (!response.results) {
             throw new Error('No TV shows available');
         }
 
         updateShowsGrid(response.results);
         updatePagination(response.page, response.total_pages);
-        document.body.classList.remove('loading');
     } catch (error) {
         console.error('Error loading TV shows:', error);
         showError('Failed to load TV shows. Please try again.');
-        document.body.classList.remove('loading');
     }
+}
+
+function createShowCard(show) {
+    const posterPath = show.poster_path 
+        ? api.getImageUrl(show.poster_path, 'w342') 
+        : 'assets/placeholder.jpg';
+    
+    return `
+        <a href="tv-show-details.html?id=${show.id}" class="show-card-link">
+            <div class="show-card" data-id="${show.id}">
+                <img src="${posterPath}" alt="${show.name}">
+                ${show.status ? `<span class="show-status">${show.status}</span>` : ''}
+                <div class="show-info">
+                    <h3>${show.name}</h3>
+                    <div class="show-meta">
+                        <span>${show.first_air_date?.split('-')[0] || 'N/A'}</span>
+                        <span class="show-rating">
+                            <i class="fas fa-star"></i>
+                            ${show.vote_average ? show.vote_average.toFixed(1) : 'N/A'}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </a>
+    `;
 }
 
 function updateShowsGrid(shows) {
     const showsGrid = document.querySelector('.shows-grid');
-    
-    if (!shows || shows.length === 0) {
-        showsGrid.innerHTML = '<p class="no-data">No TV shows found matching your criteria</p>';
-        return;
-    }
-
     showsGrid.innerHTML = shows.map(show => createShowCard(show)).join('');
-}
-
-function createShowCard(show) {
-    const posterPath = show.poster_path ? api.getImageUrl(show.poster_path, 'w342') : 'assets/placeholder.jpg';
-    return `
-        <div class="show-card" data-id="${show.id}">
-            <img src="${posterPath}" alt="${show.name}">
-            ${show.status ? `<span class="show-status">${show.status}</span>` : ''}
-            <div class="show-info">
-                <h3>${show.name}</h3>
-                <div class="show-meta">
-                    <span>${show.first_air_date?.split('-')[0] || 'N/A'}</span>
-                    <span class="show-rating">
-                        <i class="fas fa-star"></i>
-                        ${show.vote_average ? show.vote_average.toFixed(1) : 'N/A'}
-                    </span>
-                </div>
-            </div>
-        </div>
-    `;
 }
 
 function updatePagination(currentPage, totalPages) {
     const prevButton = document.querySelector('.prev-page');
     const nextButton = document.querySelector('.next-page');
-    const currentPageSpan = document.querySelector('.current-page');
+    const pageInfo = document.querySelector('.current-page');
 
     prevButton.disabled = currentPage === 1;
     nextButton.disabled = currentPage === totalPages;
-    currentPageSpan.textContent = `Page ${currentPage} of ${totalPages}`;
-}
-
-async function handleSearch(query) {
-    if (!query.trim()) {
-        currentFilters = {
-            sort_by: 'popularity.desc',
-            with_genres: [],
-            first_air_date_year: '',
-            with_networks: [],
-            with_status: ''
-        };
-        currentPage = 1;
-        loadTVShows();
-        return;
-    }
-
-    try {
-        const response = await api.searchTVShows(query, 1);
-        
-        if (!response.results || response.results.length === 0) {
-            throw new Error('No TV shows found matching your search');
-        }
-
-        updateShowsGrid(response.results);
-        updatePagination(response.page, response.total_pages);
-    } catch (error) {
-        console.error('Error searching TV shows:', error);
-        showError('Failed to search TV shows. Please try again.');
-    }
+    pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
 }
 
 function showError(message) {
@@ -361,15 +328,31 @@ function showError(message) {
 
     document.body.appendChild(errorDiv);
 
-    // Add click handler to close button
-    errorDiv.querySelector('.close-error').addEventListener('click', () => {
-        errorDiv.remove();
-    });
+    const closeButton = errorDiv.querySelector('.close-error');
+    closeButton.addEventListener('click', () => errorDiv.remove());
 
-    // Auto-hide after 5 seconds
     setTimeout(() => {
         if (errorDiv.parentNode) {
             errorDiv.remove();
         }
     }, 5000);
+}
+
+function initializeBackToTop() {
+    const backToTopButton = document.getElementById('back-to-top');
+    
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 300) {
+            backToTopButton.classList.add('visible');
+        } else {
+            backToTopButton.classList.remove('visible');
+        }
+    });
+    
+    backToTopButton.addEventListener('click', () => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
 } 

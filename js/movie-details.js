@@ -1,5 +1,5 @@
 // Initialize API
-const api = new MovieAPI();
+// const api = new MovieAPI();
 
 document.addEventListener('DOMContentLoaded', () => {
     // Get movie ID from URL parameters
@@ -43,13 +43,11 @@ async function loadMovieDetails(movieId) {
         document.body.classList.add('loading');
 
         // Fetch all required data in parallel
-        const [movieDetails, credits, videos, streamingProviders, similarMovies, streamingLinks] = await Promise.all([
+        const [movieDetails, credits, videos, streamingProviders] = await Promise.all([
             api.getMovieDetails(movieId),
             api.getMovieCredits(movieId),
             api.getMovieVideos(movieId),
-            api.getMovieWatchProviders(movieId),
-            api.getSimilarMovies(movieId),
-            api.getStreamingLinks(movieId)
+            api.getMovieWatchProviders(movieId)
         ]).catch(error => {
             console.error('Error fetching movie data:', error);
             throw new Error('Failed to load movie data. Please try again.');
@@ -92,16 +90,59 @@ async function loadMovieDetails(movieId) {
             castList.innerHTML = '<p class="no-data">No cast information available</p>';
         }
 
-        // Update streaming options with new direct links
+        // Update streaming options
         const streamingOptions = document.getElementById('streaming-options');
-        if (streamingLinks.sources && streamingLinks.sources.length > 0) {
-            streamingOptions.innerHTML = streamingLinks.sources.map(provider => `
-                <a href="${provider.url}" target="_blank" class="streaming-option ${provider.type}">
-                    <img src="${provider.logo}" alt="${provider.name}">
-                    <span>${provider.name}</span>
-                    <div class="provider-type">${provider.type}</div>
-                </a>
-            `).join('');
+        if (streamingProviders.results && streamingProviders.results.US) {
+            const providers = streamingProviders.results.US;
+            const allProviders = [];
+
+            // Add subscription providers
+            if (providers.flatrate) {
+                providers.flatrate.forEach(provider => {
+                    allProviders.push({
+                        name: provider.provider_name,
+                        logo: api.getImageUrl(provider.logo_path),
+                        url: providers.link,
+                        type: "subscription"
+                    });
+                });
+            }
+
+            // Add rental providers
+            if (providers.rent) {
+                providers.rent.forEach(provider => {
+                    allProviders.push({
+                        name: provider.provider_name,
+                        logo: api.getImageUrl(provider.logo_path),
+                        url: providers.link,
+                        type: "rent"
+                    });
+                });
+            }
+
+            // Add purchase providers
+            if (providers.buy) {
+                providers.buy.forEach(provider => {
+                    allProviders.push({
+                        name: provider.provider_name,
+                        logo: api.getImageUrl(provider.logo_path),
+                        url: providers.link,
+                        type: "buy"
+                    });
+                });
+            }
+
+            if (allProviders.length > 0) {
+                streamingOptions.innerHTML = allProviders.map(provider => `
+                    <a href="${provider.url}" target="_blank" class="streaming-option ${provider.type}">
+                        <img src="${provider.logo}" alt="${provider.name}">
+                        <span>${provider.name}</span>
+                        <div class="provider-type">${provider.type}</div>
+                    </a>
+                `).join('');
+            } else {
+                streamingOptions.innerHTML = '<p class="no-data">No streaming options available at the moment</p>';
+            }
         } else {
             streamingOptions.innerHTML = '<p class="no-data">No streaming options available at the moment</p>';
         }
@@ -130,8 +171,8 @@ async function loadMovieDetails(movieId) {
 
         // Update similar movies
         const similarMoviesContainer = document.getElementById('similar-movies');
-        if (similarMovies.results && similarMovies.results.length > 0) {
-            similarMoviesContainer.innerHTML = similarMovies.results.slice(0, 6).map(movie => `
+        if (movieDetails.similar && movieDetails.similar.results && movieDetails.similar.results.length > 0) {
+            similarMoviesContainer.innerHTML = movieDetails.similar.results.slice(0, 6).map(movie => `
                 <div class="similar-movie-card" onclick="window.location.href='movie-details.html?id=${movie.id}'">
                     <img src="${movie.poster_path 
                         ? api.getImageUrl(movie.poster_path, 'w342')
@@ -151,7 +192,7 @@ async function loadMovieDetails(movieId) {
         document.body.classList.remove('loading');
 
         // Setup event listeners
-        setupEventListeners(movieId, streamingLinks);
+        setupEventListeners(movieId, streamingProviders.results?.US);
     } catch (error) {
         console.error('Error loading movie details:', error);
         showError(error.message || 'Failed to load movie details. Please try again later.');
@@ -163,7 +204,7 @@ function setupEventListeners(movieId, streamingLinks) {
     // Play button
     const playButton = document.querySelector('.play-button');
     playButton.addEventListener('click', () => {
-        if (streamingLinks.sources && streamingLinks.sources.length > 0) {
+        if (streamingLinks && streamingLinks.length > 0) {
             // Add to history if user is logged in
             if (typeof auth !== 'undefined' && auth.isLoggedIn()) {
                 const movieTitle = document.getElementById('movie-title').textContent;
@@ -180,7 +221,7 @@ function setupEventListeners(movieId, streamingLinks) {
             }
             
             // Open the first streaming option
-            window.open(streamingLinks.sources[0].url, '_blank');
+            window.open(streamingLinks[0].url, '_blank');
         } else {
             // If no streaming options, scroll to that section
             const streamingOptions = document.getElementById('streaming-options');

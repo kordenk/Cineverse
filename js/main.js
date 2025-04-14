@@ -36,7 +36,7 @@ async function handleSearch(query) {
     }
 
     try {
-        document.body.classList.add('loading');
+        showLoadingSpinner();
         
         // Search both movies and TV shows
         const [movieResults, tvResults] = await Promise.all([
@@ -61,7 +61,7 @@ async function handleSearch(query) {
         console.error('Search error:', error);
         showError('Failed to perform search. Please try again.');
     } finally {
-        document.body.classList.remove('loading');
+        hideLoadingSpinner();
     }
 }
 
@@ -267,7 +267,20 @@ function createMovieDetailsHTML(movie) {
     `;
 }
 
+function showLoadingSpinner() {
+    document.body.classList.add('loading');
+}
+
+function hideLoadingSpinner() {
+    document.body.classList.remove('loading');
+}
+
 function showError(message) {
+    const existingError = document.querySelector('.error-message');
+    if (existingError) {
+        existingError.remove();
+    }
+
     const errorDiv = document.createElement('div');
     errorDiv.className = 'error-message';
     errorDiv.innerHTML = `
@@ -280,12 +293,9 @@ function showError(message) {
 
     document.body.appendChild(errorDiv);
 
-    // Add click handler to close button
-    errorDiv.querySelector('.close-error').addEventListener('click', () => {
-        errorDiv.remove();
-    });
+    const closeButton = errorDiv.querySelector('.close-error');
+    closeButton.addEventListener('click', () => errorDiv.remove());
 
-    // Auto-hide after 5 seconds
     setTimeout(() => {
         if (errorDiv.parentNode) {
             errorDiv.remove();
@@ -501,4 +511,32 @@ document.addEventListener('mousemove', (e) => {
     if (e.clientY < 50) {
         nav.classList.remove('nav-hidden');
     }
-}); 
+});
+
+// Common utility functions
+function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+}
+
+function formatYear(dateString) {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).getFullYear();
+}
+
+function formatRuntime(minutes) {
+    if (!minutes) return 'N/A';
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return `${hours}h ${remainingMinutes}m`;
+}
+
+function formatRating(rating) {
+    if (!rating) return 'N/A';
+    return rating.toFixed(1);
+} 

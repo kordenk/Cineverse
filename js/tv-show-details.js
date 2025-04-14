@@ -80,10 +80,11 @@ async function initializeTVShowPage() {
         document.body.classList.add('loading');
 
         // Fetch all show data
-        const [showDetails, credits, videos] = await Promise.all([
+        const [showDetails, credits, videos, streamingProviders] = await Promise.all([
             api.getTVShowDetails(currentShowId),
             api.getTVShowCredits(currentShowId),
-            api.getTVShowVideos(currentShowId)
+            api.getTVShowVideos(currentShowId),
+            api.getTVShowWatchProviders(currentShowId)
         ]);
 
         // Update the UI with show data
@@ -91,13 +92,13 @@ async function initializeTVShowPage() {
         updateCastSection(credits.cast);
         updateVideosSection(videos.results);
         updateSimilarShows(showDetails.similar.results);
-        await loadStreamingProviders();
+        updateStreamingProviders(streamingProviders);
         
         // Load first season episodes
         await loadSeasonEpisodes(1);
         
         // Setup event listeners
-        setupEventListeners(showDetails);
+        setupEventListeners(showDetails, streamingProviders.results?.US);
         
         document.body.classList.remove('loading');
     } catch (error) {
@@ -117,7 +118,7 @@ function updateShowDetails(show) {
     // Update poster
     const posterPath = show.poster_path 
         ? api.getImageUrl(show.poster_path, 'w500') 
-        : 'images/no-poster.png';
+        : 'assets/placeholder.jpg';
     document.getElementById('show-poster').src = posterPath;
 
     // Update title and meta information
@@ -147,9 +148,9 @@ function updateCastSection(cast) {
     castGrid.innerHTML = cast.slice(0, 12).map(actor => `
         <div class="cast-card">
             <div class="cast-image">
-                <img src="${actor.profile_path ? api.getImageUrl(actor.profile_path, 'w185') : 'images/no-profile.png'}" 
+                <img src="${actor.profile_path ? api.getImageUrl(actor.profile_path, 'w185') : 'assets/placeholder-actor.jpg'}" 
                      alt="${actor.name}"
-                     onerror="this.src='images/no-profile.png'">
+                     onerror="this.src='assets/placeholder-actor.jpg'">
             </div>
             <div class="cast-info">
                 <h4>${actor.name}</h4>
@@ -187,9 +188,9 @@ function updateSimilarShows(shows) {
     const similarGrid = document.querySelector('.similar-grid');
     similarGrid.innerHTML = shows.slice(0, 6).map(show => `
         <div class="item-card" data-id="${show.id}">
-            <img src="${show.poster_path ? api.getImageUrl(show.poster_path, 'w342') : 'images/no-poster.png'}" 
+            <img src="${show.poster_path ? api.getImageUrl(show.poster_path, 'w342') : 'assets/placeholder.jpg'}" 
                  alt="${show.name}"
-                 onerror="this.src='images/no-poster.png'">
+                 onerror="this.src='assets/placeholder.jpg'">
             <div class="item-info">
                 <h3>${show.name}</h3>
                 <div class="item-meta">
@@ -204,17 +205,55 @@ function updateSimilarShows(shows) {
     `).join('');
 }
 
-async function loadStreamingProviders() {
-    try {
-        const streamingLinks = await api.getStreamingLinks(currentShowId);
-        const streamingSection = document.querySelector('.streaming-providers');
-        
-        if (!streamingLinks.sources || streamingLinks.sources.length === 0) {
-            streamingSection.innerHTML = '<p class="no-streaming">No streaming options available at the moment</p>';
-            return;
-        }
+function updateStreamingProviders(providers) {
+    const streamingSection = document.querySelector('.streaming-providers');
+    
+    if (!providers.results || !providers.results.US) {
+        streamingSection.innerHTML = '<p class="no-streaming">No streaming options available at the moment</p>';
+        return;
+    }
 
-        streamingSection.innerHTML = streamingLinks.sources.map(provider => `
+    const usProviders = providers.results.US;
+    const allProviders = [];
+
+    // Add subscription providers
+    if (usProviders.flatrate) {
+        usProviders.flatrate.forEach(provider => {
+            allProviders.push({
+                name: provider.provider_name,
+                logo: api.getImageUrl(provider.logo_path),
+                url: usProviders.link,
+                type: "subscription"
+            });
+        });
+    }
+
+    // Add rental providers
+    if (usProviders.rent) {
+        usProviders.rent.forEach(provider => {
+            allProviders.push({
+                name: provider.provider_name,
+                logo: api.getImageUrl(provider.logo_path),
+                url: usProviders.link,
+                type: "rent"
+            });
+        });
+    }
+
+    // Add purchase providers
+    if (usProviders.buy) {
+        usProviders.buy.forEach(provider => {
+            allProviders.push({
+                name: provider.provider_name,
+                logo: api.getImageUrl(provider.logo_path),
+                url: usProviders.link,
+                type: "buy"
+            });
+        });
+    }
+
+    if (allProviders.length > 0) {
+        streamingSection.innerHTML = allProviders.map(provider => `
             <a href="${provider.url}" target="_blank" class="streaming-option ${provider.type}">
                 <img src="${provider.logo}" alt="${provider.name}">
                 <span>${provider.name}</span>
@@ -226,13 +265,11 @@ async function loadStreamingProviders() {
         const watchButton = document.querySelector('.watch-button');
         if (watchButton) {
             watchButton.addEventListener('click', () => {
-                window.open(streamingLinks.sources[0].url, '_blank');
+                window.open(allProviders[0].url, '_blank');
             });
         }
-    } catch (error) {
-        console.error('Error loading streaming providers:', error);
-        const streamingSection = document.querySelector('.streaming-providers');
-        streamingSection.innerHTML = '<p class="no-streaming">Failed to load streaming options</p>';
+    } else {
+        streamingSection.innerHTML = '<p class="no-streaming">No streaming options available at the moment</p>';
     }
 }
 
@@ -245,30 +282,33 @@ async function loadSeasonEpisodes(seasonNumber) {
         episodesGrid.innerHTML = episodes.episodes.map(episode => `
             <div class="episode-card">
                 <div class="episode-image">
-                    <img src="${episode.still_path ? api.getImageUrl(episode.still_path, 'w300') : 'images/no-episode.png'}" 
+                    <img src="${episode.still_path ? api.getImageUrl(episode.still_path, 'w300') : 'assets/placeholder.jpg'}" 
                          alt="Episode ${episode.episode_number}"
-                         onerror="this.src='images/no-episode.png'">
+                         onerror="this.src='assets/placeholder.jpg'">
                 </div>
                 <div class="episode-info">
                     <h3>Episode ${episode.episode_number}: ${episode.name}</h3>
-                    <div class="episode-meta">
-                        <span>Air Date: ${episode.air_date || 'TBA'}</span>
-                        <span>Rating: ${episode.vote_average?.toFixed(1) || 'N/A'}</span>
-                    </div>
                     <p class="episode-overview">${episode.overview || 'No overview available.'}</p>
+                    <div class="episode-meta">
+                        <span class="air-date">${episode.air_date || 'TBA'}</span>
+                        <span class="rating">
+                            <i class="fas fa-star"></i>
+                            ${episode.vote_average?.toFixed(1) || 'N/A'}
+                        </span>
+                    </div>
                 </div>
             </div>
         `).join('');
-
+        
         document.body.classList.remove('loading');
     } catch (error) {
         console.error('Error loading episodes:', error);
-        showError('Failed to load episodes. Please try again.');
+        document.querySelector('.episodes-grid').innerHTML = '<p class="error">Failed to load episodes</p>';
         document.body.classList.remove('loading');
     }
 }
 
-function setupEventListeners(show) {
+function setupEventListeners(show, providers) {
     // Season selector
     const seasonSelect = document.getElementById('season-select');
     seasonSelect.addEventListener('change', (e) => {
@@ -336,6 +376,7 @@ function setupEventListeners(show) {
 
 function updateWatchlistButton(showId, button) {
     if (typeof auth !== 'undefined' && auth.isLoggedIn()) {
+        button.style.display = 'flex';
         if (auth.isInWatchlist(showId, 'tv')) {
             button.innerHTML = '<i class="fas fa-check"></i> In Your List';
             button.classList.add('in-list');
@@ -343,18 +384,18 @@ function updateWatchlistButton(showId, button) {
             button.innerHTML = '<i class="fas fa-plus"></i> Add to List';
             button.classList.remove('in-list');
         }
-        button.disabled = false;
     } else {
-        button.innerHTML = '<i class="fas fa-plus"></i> Add to List';
-        button.classList.remove('in-list');
-        button.disabled = false;
+        button.style.display = 'none';
     }
 }
 
-function showNotification(message, type = 'success') {
+function showNotification(message) {
     const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.textContent = message;
+    notification.className = 'notification';
+    notification.innerHTML = `
+        <i class="fas fa-info-circle"></i>
+        <span>${message}</span>
+    `;
     
     document.body.appendChild(notification);
     
@@ -410,12 +451,9 @@ function showError(message) {
 
     document.body.appendChild(errorDiv);
 
-    // Add click handler to close button
-    errorDiv.querySelector('.close-error').addEventListener('click', () => {
-        errorDiv.remove();
-    });
+    const closeButton = errorDiv.querySelector('.close-error');
+    closeButton.addEventListener('click', () => errorDiv.remove());
 
-    // Auto-hide after 5 seconds
     setTimeout(() => {
         if (errorDiv.parentNode) {
             errorDiv.remove();
