@@ -1,3 +1,121 @@
+/* Header and Navigation */
+header {
+    display: flex;
+    align-items: center;
+    padding: 1rem 2rem;
+    background-color: var(--background-dark);
+    gap: 2rem;
+}
+
+.logo {
+    padding: 0.5rem 1rem;
+}
+
+.logo a {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    text-decoration: none;
+    background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    position: relative;
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+.logo a::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    background: linear-gradient(45deg, 
+        rgba(0, 242, 255, 0.1),
+        rgba(255, 0, 255, 0.1)
+    );
+    border-radius: 10px;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.logo a:hover::before {
+    opacity: 1;
+}
+
+.logo a::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: radial-gradient(circle, 
+        rgba(0, 242, 255, 0.2),
+        transparent 70%
+    );
+    transform: translate(-50%, -50%);
+    transition: width 0.3s ease, height 0.3s ease;
+}
+
+.main-nav {
+    display: flex;
+    gap: 2rem;
+    margin-left: 0;
+}
+
+.main-nav a {
+    color: white;
+    text-decoration: none;
+    font-size: 1rem;
+    transition: color 0.3s ease;
+}
+
+.main-nav a:hover,
+.main-nav a.active {
+    color: var(--primary-color);
+}
+
+.search-bar {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 0.5rem 1rem;
+    margin-left: auto;
+}
+
+.search-bar input {
+    background: none;
+    border: none;
+    color: white;
+    padding: 0.5rem;
+    width: 200px;
+}
+
+.search-bar input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.search-bar button {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    cursor: pointer;
+}
+
+.profile a {
+    color: white;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.profile a:hover {
+    color: var(--primary-color);
+}
+
 .container {
     display: grid;
     grid-template-columns: 250px 1fr;

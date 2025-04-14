@@ -15,29 +15,25 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-brand">
+    <header>
+        <div class="logo">
             <a href="index.html">CineVerse</a>
         </div>
-        <div class="nav-links">
+        <nav class="main-nav">
             <a href="index.html">Home</a>
             <a href="movies.html">Movies</a>
             <a href="tv-shows.html" class="active">TV Shows</a>
             <a href="new-popular.html">New & Popular</a>
             <a href="categories.html">Categories</a>
+        </nav>
+        <div class="search-bar">
+            <input type="text" placeholder="Search TV shows..." id="search-input">
+            <button type="submit"><i class="fas fa-search"></i></button>
         </div>
-        <div class="nav-search">
-            <input type="text" id="search-input" placeholder="Search TV shows...">
-            <button id="search-button">
-                <i class="fas fa-search"></i>
-            </button>
+        <div class="profile">
+            <a href="profile.html">Profile</a>
         </div>
-        <div class="nav-profile">
-            <a href="profile.html">
-                <img src="assets/default-avatar.png" alt="Profile">
-            </a>
-        </div>
-    </nav>
+    </header>
 
     <main class="container">
         <aside class="filters-section">
