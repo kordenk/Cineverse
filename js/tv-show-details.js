@@ -4,68 +4,9 @@ let currentShowId = null;
 let currentSeason = 1;
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize the page
     initializeTVShowPage();
-    // Initialize back to top button
     initializeBackToTop();
-
-    // Watchlist button
-    const watchlistButton = document.querySelector('.watchlist-btn');
-    if (watchlistButton) {
-        watchlistButton.addEventListener('click', () => {
-            if (typeof auth === 'undefined' || !auth.isLoggedIn()) {
-                window.location.href = 'profile.html';
-                return;
-            }
-
-            try {
-                const showId = new URLSearchParams(window.location.search).get('id');
-                const showData = {
-                    id: showId,
-                    title: document.querySelector('.show-title').textContent,
-                    type: 'tv',
-                    poster_path: document.querySelector('.show-poster img').src.replace(/^.*\/poster\//, '')
-                };
-
-                if (auth.isInWatchlist(showId, 'tv')) {
-                    auth.removeFromWatchlist(showId, 'tv');
-                    watchlistButton.innerHTML = '<i class="fas fa-plus"></i> Add to List';
-                    watchlistButton.classList.remove('in-list');
-                    showNotification('Removed from your list');
-                } else {
-                    auth.addToWatchlist(showData);
-                    watchlistButton.innerHTML = '<i class="fas fa-check"></i> In Your List';
-                    watchlistButton.classList.add('in-list');
-                    showNotification('Added to your list');
-                }
-
-                updateWatchlistButton(showId, watchlistButton);
-            } catch (error) {
-                console.error('Error updating watchlist:', error);
-                showNotification('Something went wrong. Please try again.');
-            }
-        });
-    }
 });
-
-function initializeBackToTop() {
-    const backToTopButton = document.getElementById('back-to-top');
-    
-    window.addEventListener('scroll', () => {
-        if (window.scrollY > 300) {
-            backToTopButton.classList.add('visible');
-        } else {
-            backToTopButton.classList.remove('visible');
-        }
-    });
-    
-    backToTopButton.addEventListener('click', () => {
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        });
-    });
-}
 
 async function initializeTVShowPage() {
     try {
@@ -79,32 +20,49 @@ async function initializeTVShowPage() {
 
         document.body.classList.add('loading');
 
-        // Fetch all show data
-        const [showDetails, credits, videos, streamingProviders] = await Promise.all([
+        // Debug: Log the show ID
+        console.log('Loading TV show with ID:', currentShowId);
+
+        // Fetch show data with all necessary details
+        const [showDetails, watchProviders] = await Promise.all([
             api.getTVShowDetails(currentShowId),
-            api.getTVShowCredits(currentShowId),
-            api.getTVShowVideos(currentShowId),
             api.getTVShowWatchProviders(currentShowId)
         ]);
 
-        // Update the UI with show data
+        // Debug: Log the API responses
+        console.log('Show Details:', showDetails);
+        console.log('Watch Providers:', watchProviders);
+
+        // Check if we have valid data
+        if (!showDetails || !showDetails.name) {
+            throw new Error('Invalid show data received');
+        }
+
+        // Update UI with show data
         updateShowDetails(showDetails);
-        updateCastSection(credits.cast);
-        updateVideosSection(videos.results);
-        updateSimilarShows(showDetails.similar.results);
-        updateStreamingProviders(streamingProviders);
+        updateCastSection(showDetails.credits?.cast || []);
+        updateVideosSection(showDetails.videos?.results || []);
+        updateSimilarShows(showDetails.similar?.results || []);
+        updateStreamingProviders(watchProviders);
         
-        // Load first season episodes
-        await loadSeasonEpisodes(1);
+        // Load first season episodes if available
+        if (showDetails.seasons?.length > 0) {
+            await loadSeasonEpisodes(1);
+        }
         
         // Setup event listeners
-        setupEventListeners(showDetails, streamingProviders.results?.US);
+        setupEventListeners(showDetails, watchProviders.results?.US);
         
+        // Update watchlist button if user is logged in
+        if (typeof auth !== 'undefined' && auth.isLoggedIn()) {
+            updateWatchlistButton(currentShowId);
+        }
+
         document.body.classList.remove('loading');
     } catch (error) {
         console.error('Error initializing TV show page:', error);
-        showError('Failed to load TV show details. Please try again.');
         document.body.classList.remove('loading');
+        showError('Unable to load show details. Please try again.');
     }
 }
 
@@ -112,8 +70,11 @@ function updateShowDetails(show) {
     // Update backdrop
     const backdropPath = show.backdrop_path 
         ? api.getImageUrl(show.backdrop_path, 'original') 
-        : '';
-    document.querySelector('.backdrop-image').style.backgroundImage = `url('${backdropPath}')`;
+        : null;
+    const backdropElement = document.querySelector('.backdrop-image');
+    if (backdropPath) {
+        backdropElement.style.backgroundImage = `url('${backdropPath}')`;
+    }
 
     // Update poster
     const posterPath = show.poster_path 
@@ -121,40 +82,81 @@ function updateShowDetails(show) {
         : 'assets/placeholder.jpg';
     document.getElementById('show-poster').src = posterPath;
 
-    // Update title and meta information
+    // Update basic show information
     document.querySelector('.show-title').textContent = show.name;
-    document.querySelector('.show-year').textContent = show.first_air_date?.split('-')[0] || 'N/A';
-    document.querySelector('.rating-value').textContent = show.vote_average?.toFixed(1) || 'N/A';
-    document.querySelector('.show-status').textContent = show.status || 'N/A';
+    document.querySelector('.show-year').textContent = show.first_air_date 
+        ? new Date(show.first_air_date).getFullYear() 
+        : 'TBA';
+    document.querySelector('.rating-value').textContent = show.vote_average 
+        ? show.vote_average.toFixed(1) 
+        : 'N/A';
+    document.querySelector('.episode-runtime').textContent = show.episode_run_time?.[0] 
+        ? `${show.episode_run_time[0]}min` 
+        : '';
+    document.querySelector('.show-status').textContent = show.status || 'Unknown';
 
     // Update genres
-    const genresHTML = show.genres?.map(genre => 
-        `<span class="genre-tag">${genre.name}</span>`
-    ).join('') || '';
-    document.querySelector('.show-genres').innerHTML = genresHTML;
+    document.querySelector('.show-genres').innerHTML = show.genres
+        ?.map(genre => `<span class="genre-tag">${genre.name}</span>`)
+        .join('') || '';
 
     // Update overview
     document.querySelector('.show-overview').textContent = show.overview || 'No overview available.';
 
-    // Update season selector
+    // Update stats
+    document.querySelector('.first-air-date').textContent = show.first_air_date 
+        ? new Date(show.first_air_date).toLocaleDateString() 
+        : 'TBA';
+    document.querySelector('.network').textContent = show.networks?.[0]?.name || 'Unknown';
+    document.querySelector('.status').textContent = show.status || 'Unknown';
+
+    // Update season selector if there are seasons
     const seasonSelect = document.getElementById('season-select');
-    seasonSelect.innerHTML = show.seasons?.map((season, index) => 
-        `<option value="${season.season_number}">Season ${season.season_number}</option>`
-    ).join('') || '';
+    if (show.seasons && show.seasons.length > 0) {
+        seasonSelect.innerHTML = show.seasons
+            .filter(season => season.season_number > 0) // Filter out specials
+            .map(season => `
+                <option value="${season.season_number}">
+                    Season ${season.season_number} (${season.episode_count} episodes)
+                </option>
+            `).join('');
+        document.querySelector('.seasons-section').style.display = 'block';
+    } else {
+        document.querySelector('.seasons-section').style.display = 'none';
+    }
+
+    // Update trailer button
+    const trailerButton = document.querySelector('.trailer-button');
+    const trailer = show.videos?.results?.find(video => 
+        video.type === 'Trailer' && video.site === 'YouTube'
+    );
+    if (trailer) {
+        trailerButton.dataset.videoId = trailer.key;
+        trailerButton.style.display = 'inline-flex';
+    } else {
+        trailerButton.style.display = 'none';
+    }
 }
 
 function updateCastSection(cast) {
     const castGrid = document.querySelector('.cast-grid');
-    castGrid.innerHTML = cast.slice(0, 12).map(actor => `
+    if (!cast || cast.length === 0) {
+        castGrid.innerHTML = '<p class="no-results">No cast information available.</p>';
+        return;
+    }
+
+    castGrid.innerHTML = cast.slice(0, 12).map(person => `
         <div class="cast-card">
             <div class="cast-image">
-                <img src="${actor.profile_path ? api.getImageUrl(actor.profile_path, 'w185') : 'assets/placeholder-actor.jpg'}" 
-                     alt="${actor.name}"
-                     onerror="this.src='assets/placeholder-actor.jpg'">
+                <img src="${person.profile_path 
+                    ? api.getImageUrl(person.profile_path, 'w185') 
+                    : 'assets/placeholder.jpg'}"
+                    alt="${person.name}"
+                    onerror="this.src='assets/placeholder.jpg'">
             </div>
             <div class="cast-info">
-                <h4>${actor.name}</h4>
-                <p>${actor.character}</p>
+                <h4>${person.name}</h4>
+                <p>${person.character}</p>
             </div>
         </div>
     `).join('');
@@ -162,148 +164,127 @@ function updateCastSection(cast) {
 
 function updateVideosSection(videos) {
     const videosGrid = document.querySelector('.videos-grid');
-    const trailers = videos.filter(video => 
-        video.type.toLowerCase() === 'trailer' || 
-        video.type.toLowerCase() === 'teaser'
-    ).slice(0, 6);
+    if (!videos || videos.length === 0) {
+        videosGrid.innerHTML = '<p class="no-results">No videos available.</p>';
+        return;
+    }
 
-    videosGrid.innerHTML = trailers.map(video => `
+    videosGrid.innerHTML = videos.map(video => `
         <div class="video-card" data-video-id="${video.key}">
             <img class="video-thumbnail" 
-                 src="https://img.youtube.com/vi/${video.key}/maxresdefault.jpg" 
-                 alt="${video.name}">
-            <div class="video-play-button">
+                src="https://img.youtube.com/vi/${video.key}/maxresdefault.jpg" 
+                alt="${video.name}"
+                onerror="this.src='assets/placeholder.jpg'">
+            <div class="play-icon">
                 <i class="fas fa-play"></i>
+            </div>
+            <div class="video-info">
+                <h4>${video.name}</h4>
+                <p>${video.type}</p>
             </div>
         </div>
     `).join('');
-
-    // Set first trailer as main trailer
-    if (trailers.length > 0) {
-        document.querySelector('.trailer-button').dataset.videoId = trailers[0].key;
-    }
 }
 
 function updateSimilarShows(shows) {
     const similarGrid = document.querySelector('.similar-grid');
+    if (!shows || shows.length === 0) {
+        similarGrid.innerHTML = '<p class="no-results">No similar shows available.</p>';
+        return;
+    }
+
     similarGrid.innerHTML = shows.slice(0, 6).map(show => `
-        <div class="item-card" data-id="${show.id}">
-            <img src="${show.poster_path ? api.getImageUrl(show.poster_path, 'w342') : 'assets/placeholder.jpg'}" 
-                 alt="${show.name}"
-                 onerror="this.src='assets/placeholder.jpg'">
-            <div class="item-info">
+        <div class="show-card" onclick="window.location.href='tv-show-details.html?id=${show.id}'">
+            <img src="${show.poster_path 
+                ? api.getImageUrl(show.poster_path, 'w342') 
+                : 'assets/placeholder.jpg'}"
+                alt="${show.name}"
+                onerror="this.src='assets/placeholder.jpg'">
+            <div class="show-info">
                 <h3>${show.name}</h3>
-                <div class="item-meta">
-                    <span>${show.first_air_date?.split('-')[0] || 'N/A'}</span>
-                    <span class="item-rating">
-                        <i class="fas fa-star"></i>
-                        ${show.vote_average?.toFixed(1) || 'N/A'}
-                    </span>
+                <div class="show-meta">
+                    ${show.first_air_date 
+                        ? `<span>${new Date(show.first_air_date).getFullYear()}</span>` 
+                        : ''}
+                    ${show.vote_average 
+                        ? `<span>${show.vote_average.toFixed(1)} ★</span>` 
+                        : ''}
                 </div>
             </div>
         </div>
     `).join('');
 }
 
-function updateStreamingProviders(providers) {
-    const streamingSection = document.querySelector('.streaming-providers');
-    
-    if (!providers.results || !providers.results.US) {
-        streamingSection.innerHTML = '<p class="no-streaming">No streaming options available at the moment</p>';
+function updateStreamingProviders(data) {
+    const providersSection = document.querySelector('.streaming-providers');
+    const results = data.results?.US;
+
+    if (!results || (!results.flatrate && !results.free && !results.ads)) {
+        providersSection.innerHTML = '<p class="no-results">No streaming information available.</p>';
         return;
     }
 
-    const usProviders = providers.results.US;
-    const allProviders = [];
+    const allProviders = [
+        ...(results.flatrate || []),
+        ...(results.free || []),
+        ...(results.ads || [])
+    ];
 
-    // Add subscription providers
-    if (usProviders.flatrate) {
-        usProviders.flatrate.forEach(provider => {
-            allProviders.push({
-                name: provider.provider_name,
-                logo: api.getImageUrl(provider.logo_path),
-                url: usProviders.link,
-                type: "subscription"
-            });
-        });
+    if (allProviders.length === 0) {
+        providersSection.innerHTML = '<p class="no-results">No streaming information available.</p>';
+        return;
     }
 
-    // Add rental providers
-    if (usProviders.rent) {
-        usProviders.rent.forEach(provider => {
-            allProviders.push({
-                name: provider.provider_name,
-                logo: api.getImageUrl(provider.logo_path),
-                url: usProviders.link,
-                type: "rent"
-            });
-        });
-    }
-
-    // Add purchase providers
-    if (usProviders.buy) {
-        usProviders.buy.forEach(provider => {
-            allProviders.push({
-                name: provider.provider_name,
-                logo: api.getImageUrl(provider.logo_path),
-                url: usProviders.link,
-                type: "buy"
-            });
-        });
-    }
-
-    if (allProviders.length > 0) {
-        streamingSection.innerHTML = allProviders.map(provider => `
-            <a href="${provider.url}" target="_blank" class="streaming-option ${provider.type}">
-                <img src="${provider.logo}" alt="${provider.name}">
-                <span>${provider.name}</span>
-                <div class="provider-type">${provider.type}</div>
-            </a>
-        `).join('');
-        
-        // Update watch now button functionality
-        const watchButton = document.querySelector('.watch-button');
-        if (watchButton) {
-            watchButton.addEventListener('click', () => {
-                window.open(allProviders[0].url, '_blank');
-            });
-        }
-    } else {
-        streamingSection.innerHTML = '<p class="no-streaming">No streaming options available at the moment</p>';
-    }
+    providersSection.innerHTML = allProviders.map(provider => `
+        <div class="provider-card">
+            <img class="provider-logo" 
+                src="${api.getImageUrl(provider.logo_path, 'w92')}" 
+                alt="${provider.provider_name}"
+                onerror="this.src='assets/placeholder.jpg'">
+            <span class="provider-name">${provider.provider_name}</span>
+        </div>
+    `).join('');
 }
 
 async function loadSeasonEpisodes(seasonNumber) {
     try {
         document.body.classList.add('loading');
-        const episodes = await api.getTVShowEpisodes(currentShowId, seasonNumber);
+        const seasonData = await api.getTVShowEpisodes(currentShowId, seasonNumber);
         
         const episodesGrid = document.querySelector('.episodes-grid');
-        episodesGrid.innerHTML = episodes.episodes.map(episode => `
+        if (!seasonData.episodes || seasonData.episodes.length === 0) {
+            episodesGrid.innerHTML = '<p class="no-results">No episodes available for this season.</p>';
+            return;
+        }
+
+        episodesGrid.innerHTML = seasonData.episodes.map(episode => `
             <div class="episode-card">
                 <div class="episode-image">
-                    <img src="${episode.still_path ? api.getImageUrl(episode.still_path, 'w300') : 'assets/placeholder.jpg'}" 
-                         alt="Episode ${episode.episode_number}"
-                         onerror="this.src='assets/placeholder.jpg'">
+                    <img src="${episode.still_path 
+                        ? api.getImageUrl(episode.still_path, 'w300') 
+                        : 'assets/placeholder.jpg'}"
+                        alt="Episode ${episode.episode_number}"
+                        onerror="this.src='assets/placeholder.jpg'">
                 </div>
                 <div class="episode-info">
                     <h3>Episode ${episode.episode_number}: ${episode.name}</h3>
-                    <p class="episode-overview">${episode.overview || 'No overview available.'}</p>
                     <div class="episode-meta">
-                        <span class="air-date">${episode.air_date || 'TBA'}</span>
-                        <span class="rating">
-                            <i class="fas fa-star"></i>
-                            ${episode.vote_average?.toFixed(1) || 'N/A'}
-                        </span>
+                        ${episode.air_date 
+                            ? `<span class="air-date">${new Date(episode.air_date).toLocaleDateString()}</span>` 
+                            : '<span class="air-date">TBA</span>'}
+                        ${episode.vote_average 
+                            ? `<span class="rating"><i class="fas fa-star"></i> ${episode.vote_average.toFixed(1)}</span>` 
+                            : ''}
                     </div>
+                    <p class="episode-overview">${episode.overview || 'No overview available.'}</p>
                 </div>
             </div>
         `).join('');
-        
-        document.body.classList.remove('loading');
     } catch (error) {
         console.error('Error loading episodes:', error);
-        document.querySelector('.episodes-grid').innerHTML = '<p class="error">Failed to load episodes</p>';
+        document.querySelector('.episodes-grid').innerHTML = 
+            '<p class="error">Unable to load episodes. Please try again.</p>';
+    } finally {
         document.body.classList.remove('loading');
     }
 }
@@ -318,26 +299,15 @@ function setupEventListeners(show, providers) {
 
     // Watch button
     const watchButton = document.querySelector('.watch-button');
-    if (watchButton) {
-        watchButton.addEventListener('click', () => {
-            // Add to history if user is logged in
-            if (typeof auth !== 'undefined' && auth.isLoggedIn()) {
-                const showTitle = document.querySelector('.show-title').textContent;
-                const posterPath = document.getElementById('show-poster').src.includes('no-poster.jpg')
-                    ? null
-                    : document.getElementById('show-poster').src.replace('https://image.tmdb.org/t/p/w500', '');
-                
-                auth.addToHistory({
-                    id: currentShowId,
-                    type: 'tv',
-                    name: showTitle,
-                    poster_path: posterPath
-                });
-            }
-            
-            // Open streaming provider if available
-            const streamingSection = document.querySelector('.streaming-providers');
-            streamingSection.scrollIntoView({ behavior: 'smooth' });
+    watchButton.addEventListener('click', () => {
+        document.querySelector('.streaming-section').scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // Trailer button
+    const trailerButton = document.querySelector('.trailer-button');
+    if (trailerButton.dataset.videoId) {
+        trailerButton.addEventListener('click', () => {
+            openVideoModal(trailerButton.dataset.videoId);
         });
     }
 
@@ -349,96 +319,73 @@ function setupEventListeners(show, providers) {
         }
     });
 
-    // Trailer button
-    const trailerButton = document.querySelector('.trailer-button');
-    if (trailerButton && trailerButton.dataset.videoId) {
-        trailerButton.addEventListener('click', () => {
-            openVideoModal(trailerButton.dataset.videoId);
-        });
-    }
-
-    // Close modal
-    document.addEventListener('click', (e) => {
-        if (e.target.classList.contains('video-modal')) {
-            closeVideoModal();
+    // Watchlist button
+    const watchlistButton = document.querySelector('.watchlist-button');
+    watchlistButton.addEventListener('click', () => {
+        if (typeof auth === 'undefined' || !auth.isLoggedIn()) {
+            window.location.href = 'profile.html';
+            return;
         }
-    });
 
-    // Similar shows
-    document.querySelector('.similar-grid').addEventListener('click', (e) => {
-        const showCard = e.target.closest('.item-card');
-        if (showCard) {
-            const showId = showCard.dataset.id;
-            window.location.href = `tv-show-details.html?id=${showId}`;
-        }
-    });
-}
-
-function updateWatchlistButton(showId, button) {
-    if (typeof auth !== 'undefined' && auth.isLoggedIn()) {
-        button.style.display = 'flex';
-        if (auth.isInWatchlist(showId, 'tv')) {
-            button.innerHTML = '<i class="fas fa-check"></i> In Your List';
-            button.classList.add('in-list');
+        const isInWatchlist = watchlistButton.classList.contains('in-list');
+        if (isInWatchlist) {
+            auth.removeFromWatchlist(currentShowId, 'tv');
+            watchlistButton.innerHTML = '<i class="fas fa-plus"></i> Add to Watchlist';
+            watchlistButton.classList.remove('in-list');
+            showNotification('Removed from your watchlist');
         } else {
-            button.innerHTML = '<i class="fas fa-plus"></i> Add to List';
-            button.classList.remove('in-list');
+            auth.addToWatchlist({
+                id: currentShowId,
+                title: show.name,
+                type: 'tv',
+                poster_path: show.poster_path
+            });
+            watchlistButton.innerHTML = '<i class="fas fa-check"></i> In Watchlist';
+            watchlistButton.classList.add('in-list');
+            showNotification('Added to your watchlist');
         }
-    } else {
-        button.style.display = 'none';
-    }
-}
+    });
 
-function showNotification(message) {
-    const notification = document.createElement('div');
-    notification.className = 'notification';
-    notification.innerHTML = `
-        <i class="fas fa-info-circle"></i>
-        <span>${message}</span>
-    `;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.classList.add('show');
-    }, 10);
-    
-    setTimeout(() => {
-        notification.classList.remove('show');
-        setTimeout(() => {
-            notification.remove();
-        }, 300);
-    }, 3000);
+    // Close modal button
+    document.querySelector('.close-modal').addEventListener('click', closeVideoModal);
 }
 
 function openVideoModal(videoId) {
     const modal = document.getElementById('video-modal');
-    const videoContainer = modal.querySelector('.video-container');
-    
-    videoContainer.innerHTML = `
-        <iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" 
-                allow="autoplay; encrypted-media" 
-                allowfullscreen>
-        </iframe>
+    const container = modal.querySelector('.video-container');
+    container.innerHTML = `
+        <iframe
+            src="https://www.youtube.com/embed/${videoId}?autoplay=1"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+        ></iframe>
     `;
-    
     modal.classList.add('active');
 }
 
 function closeVideoModal() {
     const modal = document.getElementById('video-modal');
-    const videoContainer = modal.querySelector('.video-container');
-    
-    videoContainer.innerHTML = '';
     modal.classList.remove('active');
+    modal.querySelector('.video-container').innerHTML = '';
+}
+
+function showNotification(message) {
+    const notification = document.createElement('div');
+    notification.className = 'notification';
+    notification.textContent = message;
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.classList.add('show');
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }, 100);
 }
 
 function showError(message) {
-    const existingError = document.querySelector('.error-message');
-    if (existingError) {
-        existingError.remove();
-    }
-
     const errorDiv = document.createElement('div');
     errorDiv.className = 'error-message';
     errorDiv.innerHTML = `
@@ -459,4 +406,39 @@ function showError(message) {
             errorDiv.remove();
         }
     }, 5000);
+}
+
+function initializeBackToTop() {
+    const backToTopButton = document.getElementById('back-to-top');
+    
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 300) {
+            backToTopButton.classList.add('visible');
+        } else {
+            backToTopButton.classList.remove('visible');
+        }
+    });
+    
+    backToTopButton.addEventListener('click', () => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
+}
+
+function updateWatchlistButton(showId) {
+    if (typeof auth !== 'undefined' && auth.isLoggedIn()) {
+        const watchlistButton = document.querySelector('.watchlist-button');
+        if (auth.isInWatchlist(showId, 'tv')) {
+            watchlistButton.innerHTML = '<i class="fas fa-check"></i> In Your List';
+            watchlistButton.classList.add('in-list');
+        } else {
+            watchlistButton.innerHTML = '<i class="fas fa-plus"></i> Add to List';
+            watchlistButton.classList.remove('in-list');
+        }
+    } else {
+        const watchlistButton = document.querySelector('.watchlist-button');
+        watchlistButton.style.display = 'none';
+    }
 } 

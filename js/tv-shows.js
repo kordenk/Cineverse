@@ -45,15 +45,18 @@ async function initializeTVShowsPage() {
 }
 
 async function loadFeaturedShows() {
+    const featuredGrid = document.querySelector('.featured-grid');
     try {
+        featuredGrid.innerHTML = '<div class="loading-spinner">Loading featured shows...</div>';
+        
         const response = await api.getPopularTVShows(1);
         
         if (!response.results || response.results.length === 0) {
-            throw new Error('No featured shows available');
+            featuredGrid.innerHTML = '<div class="no-results">No featured shows available</div>';
+            return;
         }
 
         const featuredShows = response.results.slice(0, 3);
-        const featuredGrid = document.querySelector('.featured-grid');
         featuredGrid.innerHTML = featuredShows.map(show => createFeaturedShowCard(show)).join('');
 
         // Add click event listeners to featured shows
@@ -65,7 +68,14 @@ async function loadFeaturedShows() {
         });
     } catch (error) {
         console.error('Error loading featured shows:', error);
-        showError('Failed to load featured shows.');
+        featuredGrid.innerHTML = `
+            <div class="error-state">
+                <p>Unable to load featured shows</p>
+                <button onclick="loadFeaturedShows()" class="retry-btn">
+                    <i class="fas fa-redo"></i> Retry
+                </button>
+            </div>
+        `;
     }
 }
 
@@ -73,22 +83,43 @@ function createFeaturedShowCard(show) {
     const backdropPath = show.backdrop_path 
         ? api.getImageUrl(show.backdrop_path, 'original') 
         : 'assets/placeholder.jpg';
-    
+
     return `
-        <a href="tv-show-details.html?id=${show.id}" class="featured-show-card-link">
-            <div class="featured-show-card" data-id="${show.id}">
-                <img src="${backdropPath}" alt="${show.name}">
-                <div class="featured-show-info">
-                    <h3>${show.name}</h3>
-                    <div class="featured-show-meta">
-                        <span>${show.first_air_date?.split('-')[0] || 'N/A'}</span>
-                        <span>${show.vote_average ? show.vote_average.toFixed(1) : 'N/A'} ★</span>
-                    </div>
-                    <p class="featured-show-overview">${show.overview || 'No overview available.'}</p>
+        <div class="featured-show-card" data-id="${show.id}">
+            <img src="${backdropPath}" alt="${show.name}" onerror="this.src='assets/placeholder.jpg'">
+            <div class="featured-show-info">
+                <h3>${show.name}</h3>
+                <div class="featured-show-meta">
+                    ${show.first_air_date ? `<span>${show.first_air_date.split('-')[0]}</span>` : ''}
+                    ${show.vote_average ? `<span>${show.vote_average.toFixed(1)} ★</span>` : ''}
                 </div>
+                ${show.overview ? `<p class="featured-show-overview">${show.overview}</p>` : ''}
             </div>
-        </a>
+        </div>
     `;
+}
+
+// Helper function to get genre name from ID
+function getGenreName(genreId) {
+    const genreMap = {
+        10759: "Action & Adventure",
+        16: "Animation",
+        35: "Comedy",
+        80: "Crime",
+        99: "Documentary",
+        18: "Drama",
+        10751: "Family",
+        10762: "Kids",
+        9648: "Mystery",
+        10763: "News",
+        10764: "Reality",
+        10765: "Sci-Fi & Fantasy",
+        10766: "Soap",
+        10767: "Talk",
+        10768: "War & Politics",
+        37: "Western"
+    };
+    return genreMap[genreId] || "Other";
 }
 
 async function populateGenreFilters() {
@@ -256,9 +287,18 @@ function setupEventListeners() {
 
 async function loadTVShows() {
     try {
+        document.body.classList.add('loading');
+        const showsGrid = document.querySelector('.shows-grid');
+        showsGrid.innerHTML = '<div class="loading-spinner">Loading shows...</div>';
+
         const params = {
             ...currentFilters,
-            page: currentPage
+            page: currentPage,
+            language: 'en-US',
+            include_adult: false,
+            include_null_first_air_dates: false,
+            sort_by: currentFilters.sort_by || 'popularity.desc',
+            with_original_language: 'en'
         };
 
         if (currentFilters.with_genres.length) {
@@ -267,36 +307,75 @@ async function loadTVShows() {
 
         const response = await api.discoverTVShows(params);
         
-        if (!response.results) {
-            throw new Error('No TV shows available');
+        if (!response.results || response.results.length === 0) {
+            showsGrid.innerHTML = '<div class="no-results">No TV shows found.</div>';
+            return;
         }
 
-        updateShowsGrid(response.results);
+        // Filter out shows without necessary data
+        const validShows = response.results.filter(show => 
+            show.name && 
+            show.poster_path &&
+            show.first_air_date
+        );
+
+        updateShowsGrid(validShows);
         updatePagination(response.page, response.total_pages);
     } catch (error) {
         console.error('Error loading TV shows:', error);
-        showError('Failed to load TV shows. Please try again.');
+        const showsGrid = document.querySelector('.shows-grid');
+        showsGrid.innerHTML = `
+            <div class="error-state">
+                <p>Unable to load TV shows. Please try again.</p>
+                <button class="retry-btn" onclick="loadTVShows()">Retry</button>
+            </div>
+        `;
+    } finally {
+        document.body.classList.remove('loading');
     }
+}
+
+function resetFilters() {
+    // Reset all filters to default values
+    currentFilters = {
+        sort_by: 'popularity.desc',
+        with_genres: [],
+        first_air_date_year: '',
+        with_networks: [],
+        with_status: ''
+    };
+    currentPage = 1;
+
+    // Reset UI elements
+    document.getElementById('sort-select').value = 'popularity.desc';
+    document.getElementById('year-select').value = '';
+    document.getElementById('network-select').value = '';
+    document.getElementById('status-select').value = '';
+    document.querySelectorAll('.genre-filters input[type="checkbox"]').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+
+    // Reload shows with reset filters
+    loadTVShows();
 }
 
 function createShowCard(show) {
     const posterPath = show.poster_path 
         ? api.getImageUrl(show.poster_path, 'w342') 
         : 'assets/placeholder.jpg';
-    
+
+    const year = show.first_air_date ? show.first_air_date.split('-')[0] : '';
+    const rating = show.vote_average ? show.vote_average.toFixed(1) : '';
+
     return `
         <a href="tv-show-details.html?id=${show.id}" class="show-card-link">
             <div class="show-card" data-id="${show.id}">
-                <img src="${posterPath}" alt="${show.name}">
-                ${show.status ? `<span class="show-status">${show.status}</span>` : ''}
+                <img src="${posterPath}" alt="${show.name}" loading="lazy">
                 <div class="show-info">
                     <h3>${show.name}</h3>
                     <div class="show-meta">
-                        <span>${show.first_air_date?.split('-')[0] || 'N/A'}</span>
-                        <span class="show-rating">
-                            <i class="fas fa-star"></i>
-                            ${show.vote_average ? show.vote_average.toFixed(1) : 'N/A'}
-                        </span>
+                        ${year ? `<span class="year">${year}</span>` : ''}
+                        ${rating ? `<span class="rating">${rating} ★</span>` : ''}
                     </div>
                 </div>
             </div>
@@ -306,7 +385,15 @@ function createShowCard(show) {
 
 function updateShowsGrid(shows) {
     const showsGrid = document.querySelector('.shows-grid');
-    showsGrid.innerHTML = shows.map(show => createShowCard(show)).join('');
+    if (!showsGrid) return;
+
+    const showCards = shows.map(show => createShowCard(show)).join('');
+    showsGrid.innerHTML = showCards;
+
+    // Add lazy loading for images
+    showsGrid.querySelectorAll('img').forEach(img => {
+        img.loading = 'lazy';
+    });
 }
 
 function updatePagination(currentPage, totalPages) {
