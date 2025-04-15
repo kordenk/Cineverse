@@ -15,25 +15,25 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <header>
-        <div class="logo">
+    <nav class="navbar">
+        <div class="nav-brand">
             <a href="index.html">CineVerse</a>
         </div>
-        <nav class="main-nav">
-            <a href="index.html">Home</a>
-            <a href="movies.html">Movies</a>
-            <a href="tv-shows.html" class="active">TV Shows</a>
-            <a href="new-popular.html">New & Popular</a>
-            <a href="categories.html">Categories</a>
-        </nav>
-        <div class="search-bar">
-            <input type="text" placeholder="Search TV shows..." id="search-input">
+        <div class="nav-links">
+            <a href="index.html" class="nav-link">Home</a>
+            <a href="movies.html" class="nav-link">Movies</a>
+            <a href="tv-shows.html" class="nav-link active">TV Shows</a>
+            <a href="new-popular.html" class="nav-link">New & Popular</a>
+            <a href="categories.html" class="nav-link">Categories</a>
+        </div>
+        <div class="nav-search">
+            <input type="text" placeholder="Search movies, TV shows..." id="search-input">
             <button type="submit"><i class="fas fa-search"></i></button>
         </div>
-        <div class="profile">
-            <a href="profile.html">Profile</a>
+        <div class="nav-profile">
+            <img src="assets/default-avatar.png" alt="Profile" class="profile-avatar">
         </div>
-    </header>
+    </nav>
 
     <main class="container">
         <aside class="filters-section">
@@ -57,7 +57,7 @@
             <div class="filter-group">
                 <h3>Status</h3>
                 <select id="status-select">
-                    <option value="">All Status</option>
+                    <option value="">All Statuses</option>
                 </select>
             </div>
 
@@ -74,6 +74,8 @@
                     <option value="">All Years</option>
                 </select>
             </div>
+
+            <button class="apply-filters-btn">Apply Filters</button>
         </aside>
 
         <section class="content-section">

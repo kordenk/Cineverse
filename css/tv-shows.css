@@ -123,6 +123,7 @@ header {
     padding: 2rem;
     max-width: 1400px;
     margin: 0 auto;
+    margin-top: 80px;
 }
 
 .filters-section {
@@ -137,7 +138,7 @@ header {
 }
 
 .filter-group h3 {
-    color: var(--primary-color);
+    color: #00f2ff;
     margin-bottom: 1rem;
     font-size: 1.1rem;
     font-family: 'Orbitron', sans-serif;
@@ -149,8 +150,34 @@ header {
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(0, 242, 255, 0.2);
     border-radius: 5px;
-    color: var(--text-primary);
+    color: #ffffff;
     cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.filter-group select:hover {
+    border-color: rgba(0, 242, 255, 0.4);
+}
+
+.apply-filters-btn {
+    width: 100%;
+    padding: 0.8rem;
+    background: #00f2ff;
+    color: #000000;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+}
+
+.apply-filters-btn:hover {
+    background: #33f5ff;
+    box-shadow: 0 0 15px rgba(0, 242, 255, 0.5);
+    transform: translateY(-2px);
 }
 
 .genre-filters {
@@ -493,4 +520,92 @@ body.loading::before {
 .featured-show-card-link:hover .featured-show-card {
     transform: scale(1.02);
     box-shadow: 0 0 30px rgba(0, 242, 255, 0.3);
+}
+
+/* Navigation Bar */
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 2rem;
+    background-color: rgba(0, 0, 0, 0.95);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+}
+
+.nav-brand a {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2rem;
+    text-decoration: none;
+    color: #00f2ff;
+    text-shadow: 0 0 10px rgba(0, 242, 255, 0.3);
+}
+
+.nav-links {
+    display: flex;
+    gap: 2rem;
+    margin: 0 2rem;
+}
+
+.nav-link {
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 1rem;
+    transition: color 0.3s ease;
+    padding: 0.5rem 1rem;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: #00f2ff;
+}
+
+.nav-search {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 0.5rem 1rem;
+    margin-left: auto;
+    margin-right: 1rem;
+}
+
+.nav-search input {
+    background: none;
+    border: none;
+    color: white;
+    padding: 0.5rem;
+    width: 200px;
+    font-size: 0.9rem;
+}
+
+.nav-search input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.nav-search button {
+    background: none;
+    border: none;
+    color: #00f2ff;
+    cursor: pointer;
+}
+
+.nav-profile {
+    display: flex;
+    align-items: center;
+}
+
+.profile-avatar {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.profile-avatar:hover {
+    transform: scale(1.1);
 } 

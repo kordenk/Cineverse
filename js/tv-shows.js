@@ -19,18 +19,27 @@ document.addEventListener('DOMContentLoaded', () => {
 async function initializeTVShowsPage() {
     try {
         document.body.classList.add('loading');
-        await Promise.all([
-            loadFeaturedShows(),
-            populateGenreFilters(),
-            populateYearFilter(),
-            populateNetworkFilters(),
-            populateStatusFilter(),
-            loadTVShows()
-        ]);
-        document.body.classList.remove('loading');
+        
+        // Load each component independently and catch their errors separately
+        const initPromises = [
+            loadFeaturedShows().catch(err => console.warn('Featured shows not available:', err)),
+            populateGenreFilters().catch(err => console.warn('Genre filters not available:', err)),
+            populateYearFilter().catch(err => console.warn('Year filter not available:', err)),
+            populateNetworkFilters().catch(err => console.warn('Network filters not available:', err)),
+            populateStatusFilter().catch(err => console.warn('Status filter not available:', err)),
+            loadTVShows().catch(err => console.warn('Initial TV shows not available:', err))
+        ];
+
+        await Promise.allSettled(initPromises);
+        
+        // Only show error if no TV shows could be loaded at all
+        const showsGrid = document.querySelector('.shows-grid');
+        if (showsGrid && showsGrid.children.length === 0) {
+            showError('Unable to load TV shows. Please try refreshing the page.');
+        }
     } catch (error) {
-        console.error('Error initializing TV Shows page:', error);
-        showError('Failed to initialize the TV Shows page. Please try again.');
+        console.error('Critical error initializing TV Shows page:', error);
+    } finally {
         document.body.classList.remove('loading');
     }
 }
