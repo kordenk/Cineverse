@@ -63,7 +63,7 @@
                     <div class="show-genres"></div>
                     <p class="show-overview"></p>
                     <div class="show-actions">
-                        <button class="watch-button">
+                        <button class="watch-button" id="watch-show-btn">
                             <i class="fas fa-play"></i> Watch Now
                         </button>
                         <button class="trailer-button">
@@ -71,6 +71,22 @@
                         </button>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Video Player Section -->
+        <div class="video-player-section" id="video-player-section" style="display: none;">
+            <div class="video-container">
+                <div class="video-wrapper">
+                    <iframe id="show-iframe" allowfullscreen frameborder="0"></iframe>
+                </div>
+                <div class="episode-controls">
+                    <select id="season-select-player" class="season-select"></select>
+                    <select id="episode-select-player" class="episode-select"></select>
+                </div>
+                <button class="close-video" id="close-video">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
         </div>
 

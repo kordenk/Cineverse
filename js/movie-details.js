@@ -203,30 +203,36 @@ async function loadMovieDetails(movieId) {
 function setupEventListeners(movieId, streamingLinks) {
     // Play button
     const playButton = document.querySelector('.play-button');
+    const videoPlayerSection = document.getElementById('video-player-section');
+    const movieIframe = document.getElementById('movie-iframe');
+    const closeVideoBtn = document.getElementById('close-video');
+
     playButton.addEventListener('click', () => {
-        if (streamingLinks && streamingLinks.length > 0) {
-            // Add to history if user is logged in
-            if (typeof auth !== 'undefined' && auth.isLoggedIn()) {
-                const movieTitle = document.getElementById('movie-title').textContent;
-                const posterPath = document.getElementById('movie-poster').src.includes('no-poster.jpg')
-                    ? null
-                    : document.getElementById('movie-poster').src.replace('https://image.tmdb.org/t/p/w500', '');
-                
-                auth.addToHistory({
-                    id: movieId,
-                    type: 'movie',
-                    title: movieTitle,
-                    poster_path: posterPath
-                });
-            }
+        // Set up vidsrc.to player
+        const videoUrl = `https://vidsrc.to/embed/movie/${movieId}`;
+        movieIframe.src = videoUrl;
+        videoPlayerSection.style.display = 'flex';
+        
+        // Add to history if user is logged in
+        if (typeof auth !== 'undefined' && auth.isLoggedIn()) {
+            const movieTitle = document.getElementById('movie-title').textContent;
+            const posterPath = document.getElementById('movie-poster').src.includes('no-poster.jpg')
+                ? null
+                : document.getElementById('movie-poster').src.replace('https://image.tmdb.org/t/p/w500', '');
             
-            // Open the first streaming option
-            window.open(streamingLinks[0].url, '_blank');
-        } else {
-            // If no streaming options, scroll to that section
-            const streamingOptions = document.getElementById('streaming-options');
-            streamingOptions.scrollIntoView({ behavior: 'smooth' });
+            auth.addToHistory({
+                id: movieId,
+                type: 'movie',
+                title: movieTitle,
+                poster_path: posterPath
+            });
         }
+    });
+
+    // Close video button
+    closeVideoBtn.addEventListener('click', () => {
+        movieIframe.src = '';
+        videoPlayerSection.style.display = 'none';
     });
 
     // Add to list button

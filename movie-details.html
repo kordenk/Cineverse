@@ -56,7 +56,7 @@
                 <p id="movie-tagline" class="movie-tagline"></p>
                 <p id="movie-overview" class="movie-overview"></p>
                 <div class="movie-actions">
-                    <button class="play-button">
+                    <button class="play-button" id="watch-movie-btn">
                         <i class="fas fa-play"></i> Watch Now
                     </button>
                     <button class="add-list-button">
@@ -67,6 +67,18 @@
         </div>
     </div>
     
+    <!-- Video Player Section -->
+    <div class="video-player-section" id="video-player-section" style="display: none;">
+        <div class="video-container">
+            <div class="video-wrapper">
+                <iframe id="movie-iframe" allowfullscreen frameborder="0"></iframe>
+            </div>
+            <button class="close-video" id="close-video">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
     <!-- Trailer and Similar Movies directly below movie info -->
     <div class="trailer-and-similar">
         <div class="trailer-section">

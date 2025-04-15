@@ -441,4 +441,148 @@ function updateWatchlistButton(showId) {
         const watchlistButton = document.querySelector('.watchlist-button');
         watchlistButton.style.display = 'none';
     }
+}
+
+function initializeVideoPlayer(showId, seasons) {
+    const watchButton = document.getElementById('watch-show-btn');
+    const videoPlayerSection = document.getElementById('video-player-section');
+    const showIframe = document.getElementById('show-iframe');
+    const closeVideoBtn = document.getElementById('close-video');
+    const seasonSelectPlayer = document.getElementById('season-select-player');
+    const episodeSelectPlayer = document.getElementById('episode-select-player');
+
+    // Initialize season select
+    seasonSelectPlayer.innerHTML = seasons.map(season => 
+        `<option value="${season.season_number}">Season ${season.season_number}</option>`
+    ).join('');
+
+    // Initialize episode select for first season
+    updateEpisodeSelect(seasons[0]);
+
+    // Handle season change
+    seasonSelectPlayer.addEventListener('change', () => {
+        const selectedSeason = seasons.find(s => s.season_number === parseInt(seasonSelectPlayer.value));
+        updateEpisodeSelect(selectedSeason);
+        updateVideoSource(showId, seasonSelectPlayer.value, episodeSelectPlayer.value);
+    });
+
+    // Handle episode change
+    episodeSelectPlayer.addEventListener('change', () => {
+        updateVideoSource(showId, seasonSelectPlayer.value, episodeSelectPlayer.value);
+    });
+
+    // Watch button click
+    watchButton.addEventListener('click', () => {
+        videoPlayerSection.style.display = 'flex';
+        updateVideoSource(showId, seasonSelectPlayer.value, episodeSelectPlayer.value);
+        
+        // Add to history if user is logged in
+        if (typeof auth !== 'undefined' && auth.isLoggedIn()) {
+            const showTitle = document.querySelector('.show-title').textContent;
+            const posterPath = document.getElementById('show-poster').src.includes('no-poster.jpg')
+                ? null
+                : document.getElementById('show-poster').src.replace('https://image.tmdb.org/t/p/w500', '');
+            
+            auth.addToHistory({
+                id: showId,
+                type: 'tv',
+                title: showTitle,
+                poster_path: posterPath,
+                season: seasonSelectPlayer.value,
+                episode: episodeSelectPlayer.value
+            });
+        }
+    });
+
+    // Close video button
+    closeVideoBtn.addEventListener('click', () => {
+        showIframe.src = '';
+        videoPlayerSection.style.display = 'none';
+    });
+}
+
+function updateEpisodeSelect(season) {
+    const episodeSelectPlayer = document.getElementById('episode-select-player');
+    episodeSelectPlayer.innerHTML = Array.from({length: season.episode_count}, (_, i) => i + 1)
+        .map(num => `<option value="${num}">Episode ${num}</option>`)
+        .join('');
+}
+
+function updateVideoSource(showId, season, episode) {
+    const showIframe = document.getElementById('show-iframe');
+    const videoUrls = [
+        `https://vidsrc.to/embed/tv/${showId}/${season}/${episode}`,
+        `https://multiembed.mov/?video_id=${showId}&tmdb=1&s=${season}&e=${episode}`,
+        `https://2embed.to/embed/tmdb/tv/${showId}/${season}/${episode}`
+    ];
+    
+    // Try loading the first source
+    loadVideoSource(videoUrls, 0);
+}
+
+function loadVideoSource(urls, index) {
+    if (index >= urls.length) {
+        // If all sources failed, show error message
+        showVideoError("Sorry, this episode is currently unavailable. Please try again later or try another episode.");
+        return;
+    }
+
+    const iframe = document.getElementById('show-iframe');
+    
+    // Create a loading message
+    const loadingMsg = document.createElement('div');
+    loadingMsg.className = 'video-loading';
+    loadingMsg.innerHTML = `
+        <div class="loading-spinner"></div>
+        <p>Loading video source ${index + 1}/${urls.length}...</p>
+    `;
+    iframe.parentElement.appendChild(loadingMsg);
+
+    // Load the video source
+    iframe.src = urls[index];
+    
+    // Check if video loads successfully
+    iframe.onload = () => {
+        // Remove loading message
+        loadingMsg.remove();
+        
+        // Add error detection
+        setTimeout(() => {
+            // If the iframe content indicates an error, try next source
+            if (isVideoUnavailable(iframe)) {
+                loadVideoSource(urls, index + 1);
+            }
+        }, 2000); // Give it 2 seconds to load
+    };
+
+    iframe.onerror = () => {
+        // On error, try next source
+        loadingMsg.remove();
+        loadVideoSource(urls, index + 1);
+    };
+}
+
+function isVideoUnavailable(iframe) {
+    try {
+        // Try to detect error messages in the iframe
+        const iframeContent = iframe.contentDocument || iframe.contentWindow.document;
+        return iframeContent.body.innerText.includes('unavailable') ||
+               iframeContent.body.innerText.includes('error') ||
+               iframeContent.body.innerText.includes('not found');
+    } catch (e) {
+        // If we can't access iframe content (due to CORS), assume it's working
+        return false;
+    }
+}
+
+function showVideoError(message) {
+    const iframe = document.getElementById('show-iframe');
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'video-error';
+    errorDiv.innerHTML = `
+        <i class="fas fa-exclamation-circle"></i>
+        <p>${message}</p>
+        <button onclick="window.location.reload()">Try Again</button>
+    `;
+    iframe.parentElement.appendChild(errorDiv);
 } 
