@@ -306,9 +306,7 @@ function setCurrentPage(page) {
 }
 
 function navigateToDetails(itemId) {
-    const detailsPage = currentCategory === 'movie' 
-        ? 'movie-details.html' 
-        : 'tv-show-details.html';
+    const detailsPage = currentCategory === 'movie' ? 'movie-details.html' : 'tv-details.html';
     window.location.href = `${detailsPage}?id=${itemId}`;
 }
 

@@ -101,7 +101,7 @@ function displaySearchResults(results) {
         card.addEventListener('click', () => {
             const id = card.dataset.id;
             const type = card.dataset.type;
-            const url = type === 'movie' ? `movie-details.html?id=${id}` : `tv-show-details.html?id=${id}`;
+            const url = type === 'movie' ? `movie-details.html?id=${id}` : `tv-details.html?id=${id}`;
             window.location.href = url;
         });
     });

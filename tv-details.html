@@ -223,6 +223,27 @@
             font-size: 0.9rem;
             line-height: 1.4;
         }
+
+        .player-controls {
+            display: flex;
+            gap: 10px;
+            padding: 10px;
+            background: var(--background-dark);
+            border-radius: 5px 5px 0 0;
+        }
+
+        .quality-select, .server-select {
+            padding: 5px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--background-light);
+            color: var(--text-color);
+            cursor: pointer;
+        }
+
+        .quality-select:hover, .server-select:hover {
+            background: var(--background-darker);
+        }
     </style>
 </head>
 <body>
@@ -271,7 +292,19 @@
             </div>
 
             <div class="player-container" id="player-container">
-                <iframe id="player" src="" allowfullscreen></iframe>
+                <div class="player-controls">
+                    <select id="quality-selector" class="quality-select">
+                        <option value="auto">Auto</option>
+                        <option value="1080">1080p</option>
+                        <option value="720">720p</option>
+                        <option value="480">480p</option>
+                    </select>
+                    <select id="server-selector" class="server-select">
+                        <option value="vidsrc">VidSrc</option>
+                        <option value="vidsrcpro">VidSrc PRO</option>
+                    </select>
+                </div>
+                <iframe id="player" allowfullscreen allow="fullscreen"></iframe>
             </div>
 
             <div class="seasons-section">
@@ -435,22 +468,59 @@
         }
 
         function loadEpisode(tvShowId, seasonNumber, episodeNumber, episodeId) {
-            // Load episode in vidsrc player using the episode ID
             const player = document.getElementById('player');
+            const qualitySelector = document.getElementById('quality-selector');
+            const serverSelector = document.getElementById('server-selector');
             
             // Scroll the player into view
             player.scrollIntoView({ behavior: 'smooth', block: 'center' });
             
-            // Set the source using the episode ID
-            player.src = `https://vidsrc.to/embed/tv/${tvShowId}/${seasonNumber}/${episodeNumber}`;
+            // Construct the vidsrc URL based on selected server and quality
+            const server = serverSelector.value;
+            const quality = qualitySelector.value;
+            
+            let baseUrl;
+            if (server === 'vidsrcpro') {
+                baseUrl = 'https://vidsrc.pro/embed/tv';
+            } else {
+                baseUrl = 'https://vidsrc.to/embed/tv';
+            }
+
+            // Set the source using the episode ID with quality parameter
+            const embedUrl = `${baseUrl}/${tvShowId}/${seasonNumber}/${episodeNumber}?quality=${quality}`;
+            player.src = embedUrl;
             
             // Store the current episode info
             player.dataset.currentEpisode = JSON.stringify({
                 tvShowId,
                 seasonNumber,
                 episodeNumber,
-                episodeId
+                episodeId,
+                quality,
+                server
             });
+
+            // Add event listener for quality change
+            qualitySelector.onchange = () => {
+                const currentEpisode = JSON.parse(player.dataset.currentEpisode);
+                loadEpisode(
+                    currentEpisode.tvShowId,
+                    currentEpisode.seasonNumber,
+                    currentEpisode.episodeNumber,
+                    currentEpisode.episodeId
+                );
+            };
+
+            // Add event listener for server change
+            serverSelector.onchange = () => {
+                const currentEpisode = JSON.parse(player.dataset.currentEpisode);
+                loadEpisode(
+                    currentEpisode.tvShowId,
+                    currentEpisode.seasonNumber,
+                    currentEpisode.episodeNumber,
+                    currentEpisode.episodeId
+                );
+            };
         }
 
         function showError(message) {

@@ -63,7 +63,7 @@ async function loadFeaturedShows() {
         featuredGrid.querySelectorAll('.featured-show-card').forEach(card => {
             card.addEventListener('click', () => {
                 const showId = card.dataset.id;
-                window.location.href = `tv-show-details.html?id=${showId}`;
+                window.location.href = `tv-details.html?id=${showId}`;
             });
         });
     } catch (error) {
@@ -368,7 +368,7 @@ function createShowCard(show) {
     const rating = show.vote_average ? show.vote_average.toFixed(1) : '';
 
     return `
-        <a href="tv-show-details.html?id=${show.id}" class="show-card-link">
+        <a href="tv-details.html?id=${show.id}" class="show-card-link">
             <div class="show-card" data-id="${show.id}">
                 <img src="${posterPath}" alt="${show.name}" loading="lazy">
                 <div class="show-info">

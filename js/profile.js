@@ -445,7 +445,7 @@ function loadWatchlistItems(filter = 'all') {
             // Navigate to detail page
             window.location.href = type === 'movie' 
                 ? `movie-details.html?id=${id}` 
-                : `tv-show-details.html?id=${id}`;
+                : `tv-details.html?id=${id}`;
         });
     });
     
@@ -549,7 +549,7 @@ function loadHistoryItems(filter = 'all') {
             // Navigate to detail page
             window.location.href = type === 'movie' 
                 ? `movie-details.html?id=${id}` 
-                : `tv-show-details.html?id=${id}`;
+                : `tv-details.html?id=${id}`;
         });
     });
 }

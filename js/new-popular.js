@@ -160,7 +160,7 @@ function updatePagination(currentPage, totalPages) {
 
 function navigateToDetails(mediaType, id) {
     window.location.href = mediaType === 'tv' 
-        ? `tv-show-details.html?id=${id}`
+        ? `tv-details.html?id=${id}`
         : `movie-details.html?id=${id}`;
 }
 
