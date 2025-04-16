@@ -886,4 +886,32 @@
 
 @keyframes spin {
     to { transform: rotate(360deg); }
+}
+
+/* Coming Soon Button Styles */
+.coming-soon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.8rem 1.5rem;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: not-allowed;
+    min-width: 160px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-secondary);
+    backdrop-filter: blur(5px);
+    transition: all 0.3s ease;
+}
+
+.coming-soon-button i {
+    margin-right: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.coming-soon-button:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
 } 

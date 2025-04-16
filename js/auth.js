@@ -1,10 +1,260 @@
 class Auth {
     constructor() {
+        // Wait for Supabase to be initialized
+        if (!window.supabase) {
+            console.error('Supabase client not initialized');
+            return;
+        }
+        
+        this.supabase = window.supabase;
         this.currentUser = null;
+        
+        // Initialize data
         this.users = this.loadUsers();
         this.watchlist = this.loadWatchlist();
         this.history = this.loadHistory();
         this.preferences = this.loadPreferences();
+        
+        // Check auth state and set up listener
+        this.checkAuth();
+        this.setupAuthListener();
+    }
+
+    async checkAuth() {
+        try {
+            const { data: { session }, error } = await this.supabase.auth.getSession();
+            
+            if (error) {
+                console.error('Error checking auth:', error.message);
+                return;
+            }
+            
+            if (session) {
+                this.handleAuthChange(session.user);
+            }
+        } catch (error) {
+            console.error('Error checking auth:', error);
+        }
+    }
+
+    setupAuthListener() {
+        this.supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN' && session) {
+                this.handleAuthChange(session.user);
+            } else if (event === 'SIGNED_OUT') {
+                this.handleSignOut();
+            }
+        });
+    }
+
+    handleAuthChange(user) {
+        const authButtons = document.querySelectorAll('.auth-buttons');
+        const profileButtons = document.querySelectorAll('.profile-buttons');
+        const userAvatar = document.querySelectorAll('.user-avatar');
+        
+        authButtons.forEach(btn => btn.style.display = 'none');
+        profileButtons.forEach(btn => btn.style.display = 'flex');
+        
+        // Update user avatar if available
+        if (user.user_metadata?.avatar_url) {
+            userAvatar.forEach(avatar => {
+                avatar.src = user.user_metadata.avatar_url;
+                avatar.alt = user.email;
+            });
+        }
+
+        // Store user data in localStorage
+        localStorage.setItem('user', JSON.stringify(user));
+        
+        // Also store in cineverse_current_user for compatibility
+        const currentUser = {
+            username: user.user_metadata?.username || user.email.split('@')[0],
+            email: user.email,
+            avatar: user.user_metadata?.avatar_url || 'assets/default-avatar.png'
+        };
+        localStorage.setItem('cineverse_current_user', JSON.stringify(currentUser));
+
+        // Check if there's a redirect URL stored
+        const redirectUrl = sessionStorage.getItem('redirectAfterLogin');
+        if (redirectUrl) {
+            sessionStorage.removeItem('redirectAfterLogin');
+            window.location.href = redirectUrl;
+        } else if (window.location.pathname.includes('login.html')) {
+            // Only redirect to index if we're on the login page
+            window.location.href = 'index.html';
+        }
+    }
+
+    handleSignOut() {
+        const authButtons = document.querySelectorAll('.auth-buttons');
+        const profileButtons = document.querySelectorAll('.profile-buttons');
+        const userAvatar = document.querySelectorAll('.user-avatar');
+        
+        authButtons.forEach(btn => btn.style.display = 'flex');
+        profileButtons.forEach(btn => btn.style.display = 'none');
+        
+        // Reset avatar to default
+        userAvatar.forEach(avatar => {
+            avatar.src = 'assets/default-avatar.png';
+            avatar.alt = 'Profile';
+        });
+
+        // Clear user data from localStorage
+        localStorage.removeItem('user');
+        this.currentUser = null;
+    }
+
+    async signIn(email, password) {
+        try {
+            const { data, error } = await this.supabase.auth.signInWithPassword({
+                email,
+                password
+            });
+
+            if (error) {
+                this.showNotification(error.message, 'error');
+                return { success: false, error };
+            }
+
+            this.showNotification('Successfully signed in!', 'success');
+            return { success: true, data };
+        } catch (error) {
+            console.error('Error signing in:', error);
+            this.showNotification(error.message, 'error');
+            return { success: false, error };
+        }
+    }
+
+    async signUp(email, password) {
+        try {
+            const { data, error } = await this.supabase.auth.signUp({
+                email,
+                password
+            });
+
+            if (error) {
+                this.showNotification(error.message, 'error');
+                return { success: false, error };
+            }
+
+            this.showNotification('Verification email sent! Please check your inbox.', 'success');
+            return { success: true, data };
+        } catch (error) {
+            console.error('Error signing up:', error);
+            this.showNotification(error.message, 'error');
+            return { success: false, error };
+        }
+    }
+
+    async signOut() {
+        try {
+            const { error } = await this.supabase.auth.signOut();
+            
+            if (error) {
+                throw error;
+            }
+            
+            // Clear all stored user data
+            localStorage.removeItem('cineverse_current_user');
+            localStorage.removeItem('user');
+            sessionStorage.clear();
+            
+            // Reset auth state
+            this.currentUser = null;
+            this.watchlist = [];
+            this.history = [];
+            this.preferences = {};
+            
+            this.showNotification('Successfully logged out!', 'success');
+            
+            // Redirect to login page
+            window.location.href = 'login.html';
+            
+            return { success: true };
+        } catch (error) {
+            console.error('Error signing out:', error);
+            this.showNotification(error.message || 'Error signing out', 'error');
+            return { success: false, error };
+        }
+    }
+
+    async resetPassword(email) {
+        try {
+            const { error } = await this.supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: `${window.location.origin}/reset-password.html`
+            });
+
+            if (error) throw error;
+
+            showNotification('Password reset email sent!');
+            return { success: true };
+        } catch (error) {
+            console.error('Error resetting password:', error);
+            showNotification(error.message, 'error');
+            return { success: false, error };
+        }
+    }
+
+    async updatePassword(newPassword) {
+        try {
+            const { error } = await this.supabase.auth.updateUser({
+                password: newPassword
+            });
+
+            if (error) throw error;
+
+            showNotification('Password updated successfully!');
+            return { success: true };
+        } catch (error) {
+            console.error('Error updating password:', error);
+            showNotification(error.message, 'error');
+            return { success: false, error };
+        }
+    }
+
+    async updateProfile(data) {
+        try {
+            const { error } = await supabase.auth.updateUser({
+                data: data
+            });
+
+            if (error) throw error;
+
+            showNotification('Profile updated successfully!');
+            return { success: true };
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            showNotification(error.message, 'error');
+            return { success: false, error };
+        }
+    }
+
+    isLoggedIn() {
+        // Check if user exists in localStorage
+        const user = localStorage.getItem('user');
+        
+        // If we have a user in localStorage, consider them logged in
+        if (user) {
+            return true;
+        }
+        
+        // Also check if we have a current user in the cineverse_current_user key
+        const currentUser = localStorage.getItem('cineverse_current_user');
+        if (currentUser) {
+            return true;
+        }
+        
+        // If we have a Supabase session, consider them logged in
+        if (this.supabase?.auth?.session) {
+            return true;
+        }
+        
+        return false;
+    }
+
+    getCurrentUser() {
+        const user = localStorage.getItem('user');
+        return user ? JSON.parse(user) : null;
     }
 
     // User Management
@@ -73,21 +323,6 @@ class Auth {
         this.currentUser = null;
         localStorage.removeItem('cineverse_current_user');
         return true;
-    }
-
-    isLoggedIn() {
-        return this.currentUser !== null;
-    }
-
-    getCurrentUser() {
-        if (!this.currentUser) {
-            const savedUser = localStorage.getItem('cineverse_current_user');
-            if (savedUser) {
-                this.currentUser = JSON.parse(savedUser);
-                this.initUserData();
-            }
-        }
-        return this.currentUser;
     }
 
     updateProfile(userData) {
@@ -266,9 +501,78 @@ class Auth {
     getPreferences() {
         return this.preferences || {};
     }
+
+    showNotification(message, type = 'info') {
+        const container = document.querySelector('.notification-container');
+        const notification = document.createElement('div');
+        
+        // Add icon based on type
+        let icon = '';
+        switch (type) {
+            case 'success':
+                icon = '<i class="fas fa-check-circle"></i>';
+                break;
+            case 'error':
+                icon = '<i class="fas fa-exclamation-circle"></i>';
+                break;
+            case 'warning':
+                icon = '<i class="fas fa-exclamation-triangle"></i>';
+                break;
+            default:
+                icon = '<i class="fas fa-info-circle"></i>';
+        }
+
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `${icon}${message}`;
+        
+        // Add to container
+        container.appendChild(notification);
+
+        // Remove after 8 seconds
+        setTimeout(() => {
+            notification.classList.add('slide-out');
+            setTimeout(() => notification.remove(), 300);
+        }, 8000);
+    }
+
+    // Helper method to show form errors
+    showFormError(formGroup, message) {
+        formGroup.classList.add('error');
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'error-message';
+        errorMessage.textContent = message;
+        formGroup.appendChild(errorMessage);
+    }
+
+    // Helper method to clear form errors
+    clearFormErrors() {
+        document.querySelectorAll('.form-group.error').forEach(group => {
+            group.classList.remove('error');
+            const errorMessage = group.querySelector('.error-message');
+            if (errorMessage) {
+                errorMessage.remove();
+            }
+        });
+    }
+
+    // Add this new method
+    requireAuth() {
+        const isLoggedIn = this.isLoggedIn();
+        if (!isLoggedIn) {
+            // Store current page for redirect after login
+            if (!window.location.pathname.includes('login.html')) {
+                sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
+            }
+            
+            // Force redirect to login page
+            window.location.href = 'login.html';
+            return false;
+        }
+        return true;
+    }
 }
 
-// Create global auth instance
+// Initialize auth
 const auth = new Auth();
 
 // Check for existing session

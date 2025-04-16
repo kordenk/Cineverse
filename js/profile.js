@@ -1,11 +1,28 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize the profile page
-    initializeProfilePage();
+    // Wait for auth to be initialized
+    const checkAuthInterval = setInterval(() => {
+        if (typeof auth !== 'undefined') {
+            clearInterval(checkAuthInterval);
+            
+            // Check if user is authenticated
+            if (!auth.isLoggedIn()) {
+                // Store current page for redirect after login
+                sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
+                
+                // Redirect to login page if not authenticated
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // Initialize the profile page
+            initializeProfilePage();
+        }
+    }, 100);
     
-    // Check if user is logged in, if not show login modal
-    if (!auth.isLoggedIn()) {
-        showAuthModal();
-    }
+    // Set a timeout to prevent infinite checking
+    setTimeout(() => {
+        clearInterval(checkAuthInterval);
+    }, 5000);
 });
 
 function initializeProfilePage() {
@@ -27,10 +44,8 @@ function initializeProfilePage() {
     // Setup preferences
     initializePreferences();
     
-    // Load user data if logged in
-    if (auth.isLoggedIn()) {
-        loadUserData();
-    }
+    // Load user data
+    loadUserData();
     
     // Setup avatar change
     initializeAvatarChange();
@@ -42,6 +57,12 @@ function initializeMenu() {
     
     menuItems.forEach(item => {
         item.addEventListener('click', () => {
+            // Check if still logged in before processing click
+            if (!auth.isLoggedIn()) {
+                window.location.href = 'login.html';
+                return;
+            }
+
             // Remove active class from all items
             menuItems.forEach(i => i.classList.remove('active'));
             
@@ -60,10 +81,22 @@ function initializeMenu() {
     });
     
     // Setup logout button
-    document.querySelector('.logout-button').addEventListener('click', () => {
-        auth.logout();
-        showAuthModal();
-    });
+    const logoutButton = document.querySelector('.logout-button');
+    if (logoutButton) {
+        logoutButton.addEventListener('click', async () => {
+            try {
+                await auth.signOut();
+                showNotification('Successfully logged out', 'success');
+                // Redirect to login page after a short delay
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 1000);
+            } catch (error) {
+                console.error('Error during logout:', error);
+                showNotification('Error during logout. Please try again.', 'error');
+            }
+        });
+    }
 }
 
 // Auth Forms
@@ -661,22 +694,29 @@ function applyTheme(theme) {
 }
 
 // Utility functions
-function showNotification(message, type = 'success') {
+function showNotification(message, type = 'info') {
+    const notificationContainer = document.querySelector('.notification-container');
+    if (!notificationContainer) return;
+
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
-    notification.textContent = message;
+    notification.innerHTML = `
+        <i class="fas ${type === 'success' ? 'fa-check-circle' : 
+                       type === 'error' ? 'fa-exclamation-circle' : 
+                       type === 'warning' ? 'fa-exclamation-triangle' : 
+                       'fa-info-circle'}"></i>
+        ${message}
+    `;
     
-    document.body.appendChild(notification);
+    notificationContainer.appendChild(notification);
     
+    // Add slide-in animation
+    setTimeout(() => notification.classList.add('slide-in'), 10);
+    
+    // Remove notification after 3 seconds
     setTimeout(() => {
-        notification.classList.add('show');
-    }, 10);
-    
-    setTimeout(() => {
-        notification.classList.remove('show');
-        setTimeout(() => {
-            notification.remove();
-        }, 300);
+        notification.classList.add('slide-out');
+        setTimeout(() => notification.remove(), 300);
     }, 3000);
 }
 

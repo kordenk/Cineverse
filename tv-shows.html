@@ -13,101 +13,376 @@
     <link rel="stylesheet" href="css/tv-shows.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        .tv-shows-container {
+            padding: 2rem;
+            margin-top: 80px;
+        }
+
+        .tv-shows-header {
+            margin-bottom: 2rem;
+        }
+
+        .tv-shows-header h1 {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--primary-color);
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .tv-shows-filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-select {
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+        }
+
+        .filter-select option {
+            background: var(--background-dark);
+            color: var(--text-primary);
+        }
+
+        .tv-shows-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 2rem;
+        }
+
+        .tv-show-card {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+            cursor: pointer;
+            background: var(--background-light);
+        }
+
+        .tv-show-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .tv-show-card img {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+        }
+
+        .tv-show-info {
+            padding: 1rem;
+        }
+
+        .tv-show-title {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .tv-show-meta {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .tv-show-rating {
+            color: var(--accent-color);
+        }
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
+        }
+
+        .loading-spinner i {
+            font-size: 2rem;
+            color: var(--primary-color);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .pagination button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            background: var(--background-light);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .pagination button:hover {
+            background: var(--primary-color);
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination .current-page {
+            background: var(--primary-color);
+        }
+    </style>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-brand">
-            <a href="index.html">CineVerse</a>
+    <nav class="main-nav">
+        <div class="nav-logo">
+            <a href="index.html">
+                <h1>CineVerse</h1>
+            </a>
         </div>
         <div class="nav-links">
-            <a href="index.html" class="nav-link">Home</a>
-            <a href="movies.html" class="nav-link">Movies</a>
-            <a href="tv-shows.html" class="nav-link active">TV Shows</a>
-            <a href="new-popular.html" class="nav-link">New & Popular</a>
-            <a href="categories.html" class="nav-link">Categories</a>
+            <a href="index.html">Home</a>
+            <a href="movies.html">Movies</a>
+            <a href="tv-shows.html" class="active">TV Shows</a>
+            <a href="new-popular.html">New & Popular</a>
+            <a href="categories.html">Categories</a>
         </div>
         <div class="nav-search">
-            <input type="text" placeholder="Search movies, TV shows..." id="search-input">
-            <button type="submit"><i class="fas fa-search"></i></button>
+            <input type="text" placeholder="Search TV shows...">
+            <button><i class="fas fa-search"></i></button>
         </div>
         <div class="nav-profile">
-            <img src="assets/default-avatar.png" alt="Profile" class="profile-avatar">
+            <img src="assets/default-avatar.png" alt="Profile">
         </div>
     </nav>
 
-    <main class="container">
-        <aside class="filters-section">
-            <div class="filter-group">
-                <h3>Sort By</h3>
-                <select id="sort-select">
-                    <option value="popularity.desc">Popularity</option>
-                    <option value="vote_average.desc">Rating</option>
-                    <option value="first_air_date.desc">Release Date</option>
-                    <option value="name.asc">Name A-Z</option>
-                </select>
-            </div>
-
-            <div class="filter-group">
-                <h3>Genre</h3>
-                <div class="genre-filters">
+    <main class="tv-shows-container">
+        <div class="tv-shows-header">
+            <h1>TV Shows</h1>
+            <div class="tv-shows-filters">
+                <select class="filter-select" id="genre-filter">
+                    <option value="">All Genres</option>
                     <!-- Genres will be populated dynamically -->
-                </div>
-            </div>
-
-            <div class="filter-group">
-                <h3>Status</h3>
-                <select id="status-select">
-                    <option value="">All Statuses</option>
                 </select>
-            </div>
-
-            <div class="filter-group">
-                <h3>Networks</h3>
-                <select id="network-select">
-                    <option value="">All Networks</option>
-                </select>
-            </div>
-
-            <div class="filter-group">
-                <h3>Year</h3>
-                <select id="year-select">
+                <select class="filter-select" id="year-filter">
                     <option value="">All Years</option>
+                    <!-- Years will be populated dynamically -->
+                </select>
+                <select class="filter-select" id="sort-filter">
+                    <option value="popularity.desc">Most Popular</option>
+                    <option value="vote_average.desc">Highest Rated</option>
+                    <option value="first_air_date.desc">Newest First</option>
+                    <option value="first_air_date.asc">Oldest First</option>
                 </select>
             </div>
+        </div>
 
-            <button class="apply-filters-btn">Apply Filters</button>
-        </aside>
-
-        <section class="content-section">
-            <div class="featured-shows">
-                <h2>Featured TV Shows</h2>
-                <div class="featured-grid">
-                    <!-- Featured shows will be populated dynamically -->
-                </div>
+        <div class="tv-shows-grid" id="tv-shows-grid">
+            <!-- TV shows will be loaded here -->
+            <div class="loading-spinner">
+                <i class="fas fa-spinner"></i>
             </div>
+        </div>
 
-            <div class="shows-grid">
-                <!-- TV shows will be populated dynamically -->
-            </div>
-
-            <div class="pagination">
-                <button class="prev-page" disabled>
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-                <span class="current-page">Page 1 of 1</span>
-                <button class="next-page">
-                    <i class="fas fa-chevron-right"></i>
-                </button>
-            </div>
-        </section>
+        <div class="pagination" id="pagination">
+            <button id="prev-page" disabled>Previous</button>
+            <button id="current-page" class="current-page">1</button>
+            <button id="next-page">Next</button>
+        </div>
     </main>
-
-    <button id="back-to-top" title="Back to Top">
-        <i class="fas fa-arrow-up"></i>
-    </button>
 
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>
-    <script src="js/tv-shows.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const api = new MovieAPI();
+            let currentPage = 1;
+            let totalPages = 1;
+            let currentGenre = '';
+            let currentYear = '';
+            let currentSort = 'popularity.desc';
+
+            // Initialize filters
+            initializeFilters();
+
+            // Load initial TV shows
+            loadTVShows();
+
+            // Event listeners for filters
+            document.getElementById('genre-filter').addEventListener('change', (e) => {
+                currentGenre = e.target.value;
+                currentPage = 1;
+                loadTVShows();
+            });
+
+            document.getElementById('year-filter').addEventListener('change', (e) => {
+                currentYear = e.target.value;
+                currentPage = 1;
+                loadTVShows();
+            });
+
+            document.getElementById('sort-filter').addEventListener('change', (e) => {
+                currentSort = e.target.value;
+                currentPage = 1;
+                loadTVShows();
+            });
+
+            // Pagination event listeners
+            document.getElementById('prev-page').addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    loadTVShows();
+                }
+            });
+
+            document.getElementById('next-page').addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    loadTVShows();
+                }
+            });
+
+            async function initializeFilters() {
+                try {
+                    // Load genres using the API class
+                    const genres = await api.getTVGenres();
+
+                    const genreSelect = document.getElementById('genre-filter');
+                    genres.genres.forEach(genre => {
+                        const option = document.createElement('option');
+                        option.value = genre.id;
+                        option.textContent = genre.name;
+                        genreSelect.appendChild(option);
+                    });
+
+                    // Load years (last 20 years)
+                    const yearSelect = document.getElementById('year-filter');
+                    const currentYear = new Date().getFullYear();
+                    for (let year = currentYear; year >= currentYear - 20; year--) {
+                        const option = document.createElement('option');
+                        option.value = year;
+                        option.textContent = year;
+                        yearSelect.appendChild(option);
+                    }
+                } catch (error) {
+                    console.error('Error initializing filters:', error);
+                    showError('Failed to load filters. Please refresh the page.');
+                }
+            }
+
+            async function loadTVShows() {
+                const grid = document.getElementById('tv-shows-grid');
+                grid.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner"></i></div>';
+
+                try {
+                    const params = {
+                        sort_by: currentSort,
+                        page: currentPage,
+                        language: 'en-US'
+                    };
+
+                    if (currentGenre) {
+                        params.with_genres = currentGenre;
+                    }
+                    
+                    if (currentYear) {
+                        params.first_air_date_year = currentYear;
+                    }
+
+                    const data = await api.discoverTVShows(params);
+                    
+                    if (!data || !data.results || data.results.length === 0) {
+                        grid.innerHTML = '<p class="no-results">No TV shows found matching your criteria.</p>';
+                        return;
+                    }
+
+                    totalPages = data.total_pages;
+                    updatePagination();
+
+                    grid.innerHTML = '';
+                    data.results.forEach(show => {
+                        const card = createTVShowCard(show);
+                        grid.appendChild(card);
+                    });
+                } catch (error) {
+                    console.error('Error loading TV shows:', error);
+                    grid.innerHTML = `
+                        <div class="error-message">
+                            <p>Error loading TV shows. Please try again later.</p>
+                            <button onclick="loadTVShows()">Retry</button>
+                        </div>
+                    `;
+                }
+            }
+
+            function createTVShowCard(show) {
+                const card = document.createElement('div');
+                card.className = 'tv-show-card';
+                card.innerHTML = `
+                    <img src="${api.getImageUrl(show.poster_path, 'w500')}" alt="${show.name}" onerror="this.src='assets/placeholder.jpg'">
+                    <div class="tv-show-info">
+                        <h3 class="tv-show-title">${show.name}</h3>
+                        <div class="tv-show-meta">
+                            <span>${show.first_air_date ? show.first_air_date.split('-')[0] : 'N/A'}</span>
+                            <span class="tv-show-rating"><i class="fas fa-star"></i> ${show.vote_average.toFixed(1)}</span>
+                        </div>
+                    </div>
+                `;
+
+                card.addEventListener('click', () => {
+                    window.location.href = `tv-details.html?id=${show.id}`;
+                });
+
+                return card;
+            }
+
+            function updatePagination() {
+                const prevButton = document.getElementById('prev-page');
+                const nextButton = document.getElementById('next-page');
+                const currentPageButton = document.getElementById('current-page');
+
+                prevButton.disabled = currentPage === 1;
+                nextButton.disabled = currentPage === totalPages;
+                currentPageButton.textContent = currentPage;
+            }
+
+            function showError(message) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error-message';
+                errorDiv.innerHTML = `
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>${message}</span>
+                    <button class="close-error">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+
+                document.body.appendChild(errorDiv);
+
+                const closeButton = errorDiv.querySelector('.close-error');
+                closeButton.addEventListener('click', () => errorDiv.remove());
+
+                setTimeout(() => {
+                    if (errorDiv.parentNode) {
+                        errorDiv.remove();
+                    }
+                }, 5000);
+            }
+        });
+    </script>
 </body>
 </html> 

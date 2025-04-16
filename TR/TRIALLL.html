@@ -3,92 +3,72 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CineVerse</title>
+  <title>CineVerse Player</title>
   <style>
     body {
-      margin: 0;
-      font-family: Arial, sans-serif;
       background: #111;
       color: #fff;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
     }
-    .container {
-      padding: 20px;
-    }
+
     h1 {
       text-align: center;
-    }
-    .movie-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 15px;
       margin-top: 20px;
     }
-    .movie-card {
-      background: #222;
+
+    .player-wrapper {
+      position: relative;
+      width: 90%;
+      max-width: 900px;
+      margin: 30px auto;
       border-radius: 10px;
       overflow: hidden;
-      cursor: pointer;
-      transition: transform 0.2s;
+      box-shadow: 0 0 15px rgba(0,0,0,0.6);
     }
-    .movie-card:hover {
-      transform: scale(1.05);
-    }
-    .movie-card img {
-      width: 100%;
-      height: 225px;
-      object-fit: cover;
-    }
-    .movie-card p {
-      padding: 10px;
-      text-align: center;
-    }
+
     iframe {
       width: 100%;
       height: 500px;
-      margin-top: 30px;
       border: none;
-      border-radius: 10px;
+    }
+
+    /* Anti-Ad Overlay */
+    #clickBlocker {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      z-index: 2;
+    }
+
+    p {
+      text-align: center;
+      color: #aaa;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>🎬 CineVerse - Stream Instantly</h1>
-    <div class="movie-grid" id="movieGrid"></div>
+  <h1>🎬 CineVerse - Streaming "Bullet Train"</h1>
 
-    <iframe id="streamFrame" allowfullscreen></iframe>
+  <div class="player-wrapper">
+    <div id="clickBlocker"></div> <!-- 🛡️ Ad click blocker -->
+    <iframe
+      id="moviePlayer"
+      src="https://www.2embed.to/embed/tmdb/movie/718930"
+      allowfullscreen
+    ></iframe>
   </div>
 
+  <p>Enjoy the movie. If ads pop, close them and stay here 💪</p>
+
   <script>
-    const apiKey = '3dcaeee4e7ea355913b57d50a8d1d610'; // Replace with your TMDB key
-    const movieGrid = document.getElementById('movieGrid');
-    const streamFrame = document.getElementById('streamFrame');
-
-    // Fetch movies from TMDB
-    async function loadMovies() {
-      const res = await fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}`);
-      const data = await res.json();
-
-      data.results.forEach(movie => {
-        const card = document.createElement('div');
-        card.className = 'movie-card';
-        card.innerHTML = `
-          <img src="https://image.tmdb.org/t/p/w500${movie.poster_path}" />
-          <p>${movie.title}</p>
-        `;
-        card.onclick = () => playMovie(movie.id);
-        movieGrid.appendChild(card);
-      });
-    }
-
-    // Load movie player using public source
-    function playMovie(tmdbId) {
-      const embedUrl = `https://vidsrc.to/embed/movie/${tmdbId}`;
-      streamFrame.src = embedUrl;
-      window.scrollTo({ top: streamFrame.offsetTop - 30, behavior: 'smooth' });
-    }
-
-    loadMovies();
+    // Remove overlay after a short delay to avoid fake click ads
+    setTimeout(() => {
+      document.getElementById("clickBlocker").style.display = "none";
+    }, 2000); // 2 seconds should be enough
   </script>
 </body>
 </html>

@@ -65,9 +65,24 @@ async function loadMovieDetails(movieId) {
             document.getElementById('movie-poster').src = posterUrl;
         }
 
+        // Check if movie is released
+        const isReleased = isMovieReleased(movieDetails.release_date);
+        const watchButton = document.querySelector('.play-button');
+        
+        if (isReleased) {
+            watchButton.style.display = 'inline-flex';
+        } else {
+            watchButton.style.display = 'none';
+            // Add "Coming Soon" button instead
+            const comingSoonBtn = document.createElement('button');
+            comingSoonBtn.className = 'coming-soon-button';
+            comingSoonBtn.innerHTML = '<i class="fas fa-clock"></i> Coming Soon';
+            watchButton.parentElement.insertBefore(comingSoonBtn, watchButton);
+        }
+
         // Update movie info
         document.getElementById('movie-title').textContent = movieDetails.title;
-        document.getElementById('movie-year').textContent = movieDetails.release_date?.split('-')[0] || 'N/A';
+        document.getElementById('movie-year').textContent = movieDetails.release_date?.split('-')[0] || 'TBA';
         document.getElementById('movie-runtime').textContent = movieDetails.runtime ? `${movieDetails.runtime} min` : 'N/A';
         document.getElementById('movie-rating').textContent = movieDetails.vote_average ? `${movieDetails.vote_average.toFixed(1)}/10` : 'N/A';
         document.getElementById('movie-tagline').textContent = movieDetails.tagline || '';
@@ -313,4 +328,18 @@ function showError(message) {
     setTimeout(() => {
         errorContainer.remove();
     }, 5000);
+}
+
+// Add this new function to check if movie is released
+function isMovieReleased(releaseDate) {
+    if (!releaseDate) return false;
+    
+    const today = new Date();
+    const movieDate = new Date(releaseDate);
+    
+    // Remove time portion for accurate date comparison
+    today.setHours(0, 0, 0, 0);
+    movieDate.setHours(0, 0, 0, 0);
+    
+    return movieDate <= today;
 } 

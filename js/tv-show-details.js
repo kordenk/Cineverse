@@ -511,7 +511,7 @@ function updateEpisodeSelect(season) {
 function updateVideoSource(showId, season, episode) {
     const showIframe = document.getElementById('show-iframe');
     const videoUrls = [
-        `https://vidsrc.to/embed/tv/${showId}/${season}/${episode}`,
+        `https://vidsrc.xyz/embed/tv?tmdb=${showId}&season=${season}&episode=${episode}`,
         `https://multiembed.mov/?video_id=${showId}&tmdb=1&s=${season}&e=${episode}`,
         `https://2embed.to/embed/tmdb/tv/${showId}/${season}/${episode}`
     ];
