@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const nav = document.querySelector('.main-nav');
     const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
     const navLinks = document.querySelector('.nav-links');
+    const body = document.body;
     let lastScroll = 0;
 
     // Handle scroll effect
@@ -25,47 +26,45 @@ document.addEventListener('DOMContentLoaded', function() {
         lastScroll = currentScroll;
     });
 
-    // Mobile menu toggle
-    if (mobileMenuBtn) {
-        mobileMenuBtn.addEventListener('click', () => {
-            navLinks.classList.toggle('active');
-            document.body.style.overflow = navLinks.classList.contains('active') ? 'hidden' : '';
-            
-            // Update button icon
-            const icon = mobileMenuBtn.querySelector('i');
-            if (icon) {
-                icon.className = navLinks.classList.contains('active') ? 'fas fa-times' : 'fas fa-bars';
-            }
-        });
-    }
-
-    // Close menu when clicking outside
-    document.addEventListener('click', (e) => {
-        if (navLinks.classList.contains('active') && 
-            !e.target.closest('.nav-links') && 
-            !e.target.closest('.mobile-menu-btn')) {
-            navLinks.classList.remove('active');
-            document.body.style.overflow = '';
-            
-            // Reset button icon
-            const icon = mobileMenuBtn.querySelector('i');
-            if (icon) {
-                icon.className = 'fas fa-bars';
-            }
+    // Toggle mobile menu
+    mobileMenuBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        navLinks.classList.toggle('active');
+        mobileMenuBtn.classList.toggle('active');
+        
+        // Prevent body scroll when menu is open
+        if (navLinks.classList.contains('active')) {
+            body.style.overflow = 'hidden';
+        } else {
+            body.style.overflow = '';
         }
     });
 
-    // Close menu on window resize if open
-    window.addEventListener('resize', () => {
-        if (window.innerWidth > 768 && navLinks.classList.contains('active')) {
+    // Close menu when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!navLinks.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
             navLinks.classList.remove('active');
-            document.body.style.overflow = '';
-            
-            // Reset button icon
-            const icon = mobileMenuBtn.querySelector('i');
-            if (icon) {
-                icon.className = 'fas fa-bars';
-            }
+            mobileMenuBtn.classList.remove('active');
+            body.style.overflow = '';
+        }
+    });
+
+    // Close menu when clicking on a link
+    const menuLinks = navLinks.querySelectorAll('a');
+    menuLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            navLinks.classList.remove('active');
+            mobileMenuBtn.classList.remove('active');
+            body.style.overflow = '';
+        });
+    });
+
+    // Handle window resize
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 768) {
+            navLinks.classList.remove('active');
+            mobileMenuBtn.classList.remove('active');
+            body.style.overflow = '';
         }
     });
 
